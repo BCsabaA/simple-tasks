@@ -1,0 +1,113 @@
+from textual.app import CustomResult
+from textual.screens import ModalScreen
+from textual.widgets import Button, Static, Label, Collapsible
+from textual.layouts import Vertical
+from custom_widgets import InputWithBorder
+
+
+
+class QuitScreen(ModalScreen):
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label(
+                "Are you sure you want to quit?",
+                id="quit-question"),
+            Button(
+                "Quit", variant="error",
+                id="quit"),
+            Button(
+                "Cancel", variant="primary",
+                id="cancel"),
+            id="dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "quit":
+            self.app.exit()
+        else:
+            self.app.pop_screen()
+
+
+class QuestionScreen(ModalScreen[str]):
+    def __init__(self,
+                 title: str = 'Question',
+                 question: str = 'Answer',
+                 answers: tuple[str] = ('Cancel',)
+                 ):
+        super().__init__()
+        self.sub_title = title
+        self.question = question
+        self.answers = answers
+        
+    def compose(self) -> ComposeResult:
+        widgets = [Label(self.question, id="question")]
+        widgets += [
+            Button(
+                answer,
+                id=answer)
+            for answer in self.answers
+        ]
+        yield Grid(*widgets, id='question-dialog')
+        
+    def on_button_pressed(self, event: Button.Pressed):
+        self.dismiss(event.button.id)
+
+    def on_mount(self):
+        grid = self.query_one("#question-dialog", Grid)
+        num_buttons = len(self.answers)
+        # Limit to max 3 columns, never zero
+        columns = min(num_buttons, 3) or 1  
+        grid.styles.grid_size_columns = columns
+        grid.styles.align_horizontal = "center"
+        grid.styles.align_vertical = "middle"
+        grid.styles.grid_gutter_horizontal = 0
+        grid.styles.grid_gutter_vertical = 2
+        # Make sure the question label spans all columns
+        label = self.query_one("#question", Label)
+        label.styles.column_span = columns
+        label.styles.text_align = "center"
+        label.styles.height = "auto"
+
+        
+class FormScreen(ModalScreen[dict]):
+    def __init__(
+            self,
+            inputs: tuple[dict] = ({'input':'text'}, ),
+            ):
+        super().__init__()
+        self.inputs = inputs
+
+    def compose(self) -> ComposeResult:
+        widgets = [
+            InputWithBorder(
+                title=list(input_field.keys())[0],
+                placeholder='',
+                id=list(input_field.keys())[0],
+                type=list(input_field.items())[0][1]
+            )
+            for input_field in self.inputs
+            ]
+        widgets += [Button(
+            'Submit',
+            variant='primary',
+            id='form-screen-submit')]
+        yield Vertical(
+            *widgets,
+            id='form-screen')
+
+    def on_button_pressed(self, event: Button.Pressed):
+        input_dict = {}
+        widgets = self.query_one('#form-screen').children
+        print(widgets)
+        for widget in widgets:
+            if type(widget) == InputWithBorder:
+                input_field = widget.query_one(Input)
+                print(input_field)
+                input_dict.update(
+                    {input_field.id: input_field.value}
+                )
+        print('FormScreen before dismiss')
+        print(input_dict)
+        self.dismiss(input_dict)
+
