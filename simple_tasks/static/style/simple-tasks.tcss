@@ -4,7 +4,7 @@ QuitScreen {
 }
 
 Grid {
-    width: 40%;
+    width: 50%;
     height: auto;
     background: $surface;
     padding: 1 2;
@@ -13,7 +13,8 @@ Grid {
 Label {
     width: 100%;
     text-align: center;
-    padding: 1;
+    padding: 0;
+    padding-bottom: 1;
 }
 
 Button {
@@ -21,7 +22,7 @@ Button {
 }
 
 #quit-dialog {
-    layout: grid;
+    
     grid-size: 2;
     align: center middle;
     grid-gutter: 0 2;

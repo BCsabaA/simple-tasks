@@ -10,7 +10,7 @@ from textuals.custom_screens import QuitScreen
 from set_logger import set_logger
 
 
-logger = set_logger(__name__, new_file_on_run=False)
+logger = set_logger(__name__)
 
 
 class SimpleTasks(App):
@@ -24,6 +24,7 @@ class SimpleTasks(App):
     def on_mount(self):
         self.title = "Simple Tasks"
         self.push_screen('main')
+        logger.info('App mounted')
         
 
 

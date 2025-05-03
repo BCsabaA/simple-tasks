@@ -6,7 +6,7 @@ import os
 
 
 
-def set_logger(name, new_file_on_run: bool = True, log_folder='logs', log_file_name='info.log'):
+def set_logger(name, log_folder='logs', log_file_name='info.log'):
     SELF_LOGGER = logging.getLogger(__name__)
     self_formatter = logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
@@ -29,8 +29,6 @@ def set_logger(name, new_file_on_run: bool = True, log_folder='logs', log_file_n
     SELF_LOGGER.info(f'set_logger: formatter created: {formatter_text}')
     
     log_file = f'{log_folder}/{log_file_name}'
-    if os.path.exists(log_file) and new_file_on_run:
-        os.remove(log_file)
     file_info_handler = logging.FileHandler(f'{log_folder}/{log_file_name}',)
     file_info_handler.setFormatter(formatter)
     file_info_handler.setLevel(logging.INFO)
