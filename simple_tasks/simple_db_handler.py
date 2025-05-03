@@ -4,7 +4,6 @@ from set_logger import set_logger
 
 
 LOGGER = set_logger(__name__)
-LOGGER.info('********** NEW RUN **********')
 
 
 class Database():

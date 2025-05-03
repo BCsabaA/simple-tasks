@@ -6,7 +6,7 @@ import os
 
 
 
-def set_logger(name, log_folder='logs', log_file_name='info.log'):
+def set_logger(name, log_folder='simple_tasks/logs', log_file_name='info.log'):
     SELF_LOGGER = logging.getLogger(__name__)
     self_formatter = logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s:%(message)s'

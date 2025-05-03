@@ -4,6 +4,9 @@ from textual.widgets import Button, Static, Label, Collapsible
 from textual.containers import Vertical, Grid
 from textuals.custom_widgets import InputWithBorder
 
+from set_logger import set_logger
+
+logger = set_logger(__name__)
 
 
 class QuitScreen(ModalScreen):
@@ -28,6 +31,7 @@ class QuitScreen(ModalScreen):
         if event.button.id == "quit-button":
             print('should quit')
             self.app.exit()
+            logger.info('App exited')
         else:
             self.app.pop_screen()
 
