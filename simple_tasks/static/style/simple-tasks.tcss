@@ -1,0 +1,35 @@
+
+QuitScreen {
+    align: center middle;
+}
+
+Grid {
+    width: 40%;
+    height: auto;
+    background: $surface;
+    padding: 1 2;
+}
+
+Label {
+    width: 100%;
+    text-align: center;
+    padding: 1;
+}
+
+Button {
+    width: 100%;
+}
+
+#quit-dialog {
+    layout: grid;
+    grid-size: 2;
+    align: center middle;
+    grid-gutter: 0 2;
+}
+
+#quit-label {
+    column-span: 2;
+    height: auto;
+    width: 1fr;
+    content-align: center middle;
+}

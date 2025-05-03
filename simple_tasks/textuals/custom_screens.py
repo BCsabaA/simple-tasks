@@ -1,8 +1,8 @@
-from textual.app import CustomResult
-from textual.screens import ModalScreen
+from textual.app import ComposeResult
+from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label, Collapsible
-from textual.layouts import Vertical
-from custom_widgets import InputWithBorder
+from textual.containers import Vertical, Grid
+from textuals.custom_widgets import InputWithBorder
 
 
 
@@ -12,18 +12,21 @@ class QuitScreen(ModalScreen):
         yield Grid(
             Label(
                 "Are you sure you want to quit?",
-                id="quit-question"),
+                id="quit-label"),
             Button(
                 "Quit", variant="error",
-                id="quit"),
+                id="quit-button",
+                classes='modal-form-button',),
             Button(
                 "Cancel", variant="primary",
-                id="cancel"),
-            id="dialog",
+                id="cancel-button",
+                classes='modal-form-button',),
+            id="quit-dialog",
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "quit":
+        if event.button.id == "quit-button":
+            print('should quit')
             self.app.exit()
         else:
             self.app.pop_screen()

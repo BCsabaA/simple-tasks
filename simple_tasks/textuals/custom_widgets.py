@@ -1,4 +1,5 @@
 from textual.widgets import Button, Input, Static
+from textual.app import ComposeResult
 
 
 class InputWithBorder(Static):
