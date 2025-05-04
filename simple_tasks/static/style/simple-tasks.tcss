@@ -1,9 +1,9 @@
 
-QuitScreen {
+QuitScreen, FormScreen {
     align: center middle;
 }
 
-Grid {
+Grid, Vertical {
     width: 50%;
     height: auto;
     background: $surface;
@@ -33,4 +33,9 @@ Button {
     height: auto;
     width: 1fr;
     content-align: center middle;
+}
+
+InputWithBorder Input {
+    padding: 0 1;
+    margin: 0;
 }

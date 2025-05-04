@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label, Collapsible
 from textual.containers import Vertical, Grid
-from textuals.custom_widgets import InputWithBorder
+from textuals.custom_widgets import InputWithBorder, Input, MaskedInput
 
 from set_logger import set_logger
 
@@ -86,12 +86,15 @@ class FormScreen(ModalScreen[dict]):
         self.inputs = inputs
 
     def compose(self) -> ComposeResult:
+        print(self.inputs)
         widgets = [
             InputWithBorder(
-                title=list(input_field.keys())[0],
-                placeholder='',
-                id=list(input_field.keys())[0],
-                type=list(input_field.items())[0][1]
+                title=input_field['title'],
+                placeholder=input_field['placeholder'] if 'placeholder' in input_field else '',
+                id=input_field['id'],
+                type=input_field['type'],
+                value=input_field['value'] if 'value' in input_field else '',
+                mask=input_field['mask'] if 'mask' in input_field else None,
             )
             for input_field in self.inputs
             ]
@@ -109,7 +112,7 @@ class FormScreen(ModalScreen[dict]):
         print(widgets)
         for widget in widgets:
             if type(widget) == InputWithBorder:
-                input_field = widget.query_one(Input)
+                input_field = widget.query_one('.input-with-border-input')
                 print(input_field)
                 input_dict.update(
                     {input_field.id: input_field.value}
