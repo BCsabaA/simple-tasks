@@ -1,5 +1,9 @@
+# v0.2
+# class Database insert function returns inserted id
+
 import sqlite3
-import logging # TODO add logging
+import logging
+import os
 from set_logger import set_logger
 
 
@@ -17,7 +21,7 @@ class Database():
             self.conn = Database.DATABASE.conn
             self.cursor = Database.DATABASE.cursor
             return
-        self.db_name = db_name
+        self.db_name = f'{os.getcwd()}/{db_name}'
         Database.DATABASE = self
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
@@ -93,10 +97,12 @@ class Database():
 
     def insert(self,obj):
         table = obj.__class__.TABLENAME
+        id = None
         if table not in Database.TABLES:
             obj.parse_object_to_table()
         if obj.__dict__.get('id') == None:
-            obj.insert_instance_in_database()
+            id = obj.insert_instance_in_database()
+        return id
 
     def insert_many(self, objs):
         objs_create_table = [obj for obj in objs if obj.__class__.TABLENAME not in Database.TABLES]
@@ -165,6 +171,7 @@ class Table():
             Database.DATABASE.rollback()
             LOGGER.info(f'class Table: insert_instance_in_database(): {self.__class__.__name__}: {self} already exists (IntegrityError on some unique field), skipping')
         Database.DATABASE.close()
+        return self.id
 
     def parse_object_to_table(self):
         fields = (field for field in self.__class__.__dict__.values() if isinstance(field, Field))

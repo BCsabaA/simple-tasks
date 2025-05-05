@@ -21,6 +21,10 @@ Button {
     width: 100%;
 }
 
+.form-screen-input:focus {
+    background: red;
+}
+
 #quit-dialog {
     
     grid-size: 2;
@@ -38,4 +42,14 @@ Button {
 InputWithBorder Input {
     padding: 0 1;
     margin: 0;
+}
+
+#form-screen-submit {
+    margin-top: 1;
+}
+
+FormScreen #description, FormScreen #comment {
+    padding: 1 0;
+    height: auto;
+    max-height: 5;
 }

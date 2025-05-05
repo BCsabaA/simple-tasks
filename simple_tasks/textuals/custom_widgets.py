@@ -5,22 +5,21 @@ from textual.app import ComposeResult
 class InputWithBorder(Static):
     """A Static that acts as a titled border
     around an Input."""
-    masks = {
-        #'date': '[2][0]99-B9-[0123]9',
-        'date': '9999-99-99',
-    }
-
+    
     def __init__(self,
                  title: str,
                  placeholder: str = "",
                  value: str = "",
                  id: str = None,
                  type = 'text',
+                 widget = None,
                  mask = None,):
         super().__init__(id=id)
-        self.styles.border = ('round', 'gray')
+        self.styles.border_top = ('solid', 'gray')
         self.border_title = title
-        if mask:
+        if widget:
+            self.input = widget
+        elif mask:
             self.input = MaskedInput(
                 placeholder=placeholder,
                 value=value,

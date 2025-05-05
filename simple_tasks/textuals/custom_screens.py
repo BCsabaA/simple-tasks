@@ -1,8 +1,8 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Label, Collapsible
+from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea
 from textual.containers import Vertical, Grid
-from textuals.custom_widgets import InputWithBorder, Input, MaskedInput
+from textuals.custom_widgets import InputWithBorder
 
 from set_logger import set_logger
 
@@ -80,30 +80,32 @@ class QuestionScreen(ModalScreen[str]):
 class FormScreen(ModalScreen[dict]):
     def __init__(
             self,
+            widgets: tuple(),
             inputs: tuple[dict] = ({'input':'text'}, ),
             ):
         super().__init__()
         self.inputs = inputs
+        self.widgets = widgets
 
     def compose(self) -> ComposeResult:
         print(self.inputs)
-        widgets = [
-            InputWithBorder(
-                title=input_field['title'],
-                placeholder=input_field['placeholder'] if 'placeholder' in input_field else '',
-                id=input_field['id'],
-                type=input_field['type'],
-                value=input_field['value'] if 'value' in input_field else '',
-                mask=input_field['mask'] if 'mask' in input_field else None,
-            )
-            for input_field in self.inputs
-            ]
-        widgets += [Button(
+        # widgets = [
+        #     InputWithBorder(
+        #         title=input_field['title'],
+        #         placeholder=input_field['placeholder'] if 'placeholder' in input_field else '',
+        #         id=input_field['id'],
+        #         type=input_field['type'],
+        #         value=input_field['value'] if 'value' in input_field else '',
+        #         mask=input_field['mask'] if 'mask' in input_field else None,
+        #     )
+        #     for input_field in self.inputs
+        #     ]
+        self.widgets += [Button(
             'Submit',
             variant='primary',
             id='form-screen-submit')]
         yield Vertical(
-            *widgets,
+            *self.widgets,
             id='form-screen')
 
     def on_button_pressed(self, event: Button.Pressed):
@@ -115,9 +117,10 @@ class FormScreen(ModalScreen[dict]):
                 input_field = widget.query_one('.input-with-border-input')
                 print(input_field)
                 input_dict.update(
-                    {input_field.id: input_field.value}
+                    {input_field.id: input_field.text if type(input_field)==TextArea else input_field.value}
                 )
         print('FormScreen before dismiss')
         print(input_dict)
         self.dismiss(input_dict)
+
 
