@@ -1,9 +1,9 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible
 
 from textuals.custom_screens import QuitScreen, FormScreen
-from textuals.custom_widgets import InputWithBorder
+from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
 from set_logger import set_logger
 import controller
 
@@ -13,11 +13,16 @@ logger = set_logger(__name__)
 class MainScreen(Screen):
     BINDINGS = [
         ("q", "request_quit", "Quit"),
-        ("a", "add_task", "Add"),
+        ("-", "collapse_all", "Collapse all"),
+        ("+", "expand_all", "Expand all"),
+        ("a", "add_task", "Add task"),
+        ("m", "modify_task", "Modify task"),
+        ("s", "change_status", "Change status"),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield ObjectCardsGroup(controller.get_tasks_for_main())
         yield Footer()
         self.sub_title = 'Main Screen'
         logger.info('Main Screen loaded')
@@ -28,21 +33,22 @@ class MainScreen(Screen):
     def action_add_task(self):
         def check_inputs(inputs: dict[str]) -> None:
             id = controller.create_task_from_dict(inputs)
-            print(id)
+            task_list = self.query_one(ObjectCardsGroup)
+            new_task = controller.get_task_by_id(id)[0]
+            task_list.append(ObjectCard(new_task))
 
         self.app.push_screen(
-            # FormScreen(
-            #     (
-            #         {'title': 'name', 'type': 'text', 'placeholder': 'Task name', 'id': 'name', 'value': ''},
-            #         {'title': 'description', 'type': 'text', 'placeholder': 'Task description', 'id': 'description', 'value': ''},
-            #         {'title': 'start date', 'type': 'text', 'placeholder': 'YYYY-MM-DD', 'id': 'start_date', 'value': '', 'mask': 'date'},
-            #         {'title': 'deadline', 'type': 'text', 'placeholder': 'YYYY-MM-DD', 'id': 'deadline', 'value': '', 'mask': 'date'},
-            #         {'title': 'priority', 'type': 'integer', 'placeholder': 'Priority', 'id': 'priority', 'value': '1'},
-            #     )
-            # ),
             create_add_task_screen(),
             check_inputs
         )
+
+    def action_collapse_all(self):
+        for child in self.walk_children(Collapsible):
+            child.collapsed = True
+
+    def action_expand_all(self):
+        for child in self.walk_children(Collapsible):
+            child.collapsed = False
 
 
 masks = {
@@ -104,6 +110,7 @@ def create_add_task_screen():
             widget=Input(
                 id='priority',
                 type='integer',
+                value='1',
                 classes='input-with-border-input',
             ),
         ),

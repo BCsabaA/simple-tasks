@@ -87,11 +87,11 @@ class Database():
         Database.DATABASE.cursor.execute(create_read_query, tuple(filters.values()))
         rows = Database.DATABASE.cursor.fetchall()
         Database.DATABASE.close()
-        print(columns)
-        print(create_read_query)
-        print(rows)
-        for row in rows:
-            print(*row)
+        # print(columns)
+        # print(create_read_query)
+        # print(rows)
+        # for row in rows:
+        #     print(*row)
         LOGGER.info(f'class Database: read_table(): {table} read')
         return [obj_class(*row) for row in rows]
 

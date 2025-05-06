@@ -22,5 +22,17 @@ def create_task_from_dict(data: dict):
             )
         )
     return id
-    
+
+def get_tasks_for_main():
+    # TODO: filter and sort relevant tasks
+    return db.read(Task)
+
+def get_task_by_id(id: int) -> Task:
+    return db.read(Task, {'id': id})
+
+def get_statuses_dict():
+    statuses = db.read(Status)
+    print(statuses)
+    return #statuses_dict
+
 
