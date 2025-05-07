@@ -23,8 +23,7 @@ def create_task_from_dict(data: dict):
         )
     return id
 
-def get_tasks_for_main():
-    # TODO: filter and sort relevant tasks
+def get_tasks():
     return db.read(Task)
 
 def get_task_by_id(id: int) -> Task:
@@ -33,6 +32,17 @@ def get_task_by_id(id: int) -> Task:
 def get_statuses_dict():
     statuses = db.read(Status)
     print(statuses)
-    return #statuses_dict
+    statuses_dict = {status.id: status.name for status in statuses}
+    return statuses_dict #statuses_dict
+
+def get_status_filters_list():
+    statuses = db.read(Status)
+    status_filter_list = ()
+    for status in statuses:
+        if status.name == 'not started':
+            status_filter_list += ((str(status.id), status.name), True)
+        status_filter_list += ((str(status.id), status.name), )
+    print('Controller status_filter_list', status_filter_list)
+    return status_filter_list
 
 

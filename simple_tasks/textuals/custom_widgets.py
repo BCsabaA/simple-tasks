@@ -63,7 +63,7 @@ class ObjectCard(ListItem):
             elif param == 'type_id':
                 self.task_type_id = param_value
             elif param == 'status':
-                self.status = param_value
+                self.status_id = int(param_value)
             elif param_value and instance.__dict__[param] != None:
                 self.widgets.append(
                     Label(
@@ -76,10 +76,27 @@ class ObjectCard(ListItem):
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
         print(statuses)
-        yield Collapsible(
+        object_card = Collapsible(
             *self.widgets,
-            title = f'#{self.task_id} {self.task_name}'
+            title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})',
         )
+
+        if self.status_id == 1:
+            object_card.classes = 'card-not-started'
+        elif self.status_id == 2:
+            object_card.classes = 'card-started'
+        elif self.status_id == 3:
+            object_card.classes = 'card-delayed'
+        elif self.status_id == 4:
+            object_card.classes = 'card-blocked'
+        elif self.status_id == 5:
+            object_card.classes = 'card-skipped'
+        elif self.status_id == 6:
+            object_card.classes = 'card-deleted'
+        elif self.status_id == 7:
+            object_card.classes = 'card-done'
+
+        yield object_card
 
 
 class ObjectCardsGroup(ListView):

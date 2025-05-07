@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList
 
 from textuals.custom_screens import QuitScreen, FormScreen
 from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
@@ -13,16 +13,19 @@ logger = set_logger(__name__)
 class MainScreen(Screen):
     BINDINGS = [
         ("q", "request_quit", "Quit"),
-        ("-", "collapse_all", "Collapse all"),
-        ("+", "expand_all", "Expand all"),
+        ("f", "filter_tasks", "Filter"),
         ("a", "add_task", "Add task"),
         ("m", "modify_task", "Modify task"),
         ("s", "change_status", "Change status"),
+        ("-", "collapse_all", "Collapse all"),
+        ("+", "expand_all", "Expand all"),
     ]
 
     def compose(self) -> ComposeResult:
+        self.tasks = controller.get_tasks()
+        self.status_filter_list = controller.get_status_filters_list()
         yield Header()
-        yield ObjectCardsGroup(controller.get_tasks_for_main())
+        yield ObjectCardsGroup(self.tasks)
         yield Footer()
         self.sub_title = 'Main Screen'
         logger.info('Main Screen loaded')
@@ -30,11 +33,21 @@ class MainScreen(Screen):
     def action_request_quit(self):
         self.app.push_screen(QuitScreen())
 
+    def action_filter_tasks(self):
+        def check_inputs(inputs: dict[str]) -> None:
+            print(inputs)
+
+        self.app.push_screen(
+            create_filter_tasks_screen(self.status_filter_list),
+            check_inputs
+        )
+
     def action_add_task(self):
         def check_inputs(inputs: dict[str]) -> None:
             id = controller.create_task_from_dict(inputs)
             task_list = self.query_one(ObjectCardsGroup)
             new_task = controller.get_task_by_id(id)[0]
+            self.tasks = controller.get_tasks()
             task_list.append(ObjectCard(new_task))
 
         self.app.push_screen(
@@ -56,6 +69,15 @@ masks = {
         'date': '9999-B9-99',
     }
 
+def create_filter_tasks_screen(status_filter_list):
+    statuses = controller.get_statuses_dict()
+    filter_tasks_screen = FormScreen(
+        SelectionList(
+            status_filter_list,
+            id='status-filter-list',
+        )
+    )
+    return filter_tasks_screen
 
 def create_add_task_screen():
     return FormScreen([

@@ -63,6 +63,35 @@ ListItem {
     padding-left: 1;
 }
 
+.card-not-started {
+    background: #182e52
+}
+
+.card-started {
+    background: #154717;
+}
+
+.card-delayed {
+    background: #521a18;
+}
+
+.card-done {
+    background: #4a4646;
+}
+.card-blocked {
+    background: #73702a;
+}
+
+.card-skipped {
+    background: #5c545b;
+}
+
+.card-deleted {
+    background: #282928;
+}
+
+
+
 Footer {
     height: 2;
 }
