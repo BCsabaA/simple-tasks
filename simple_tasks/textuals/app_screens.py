@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, Static
 
 from textuals.custom_screens import QuitScreen, FormScreen
 from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
@@ -23,9 +23,11 @@ class MainScreen(Screen):
 
     def compose(self) -> ComposeResult:
         self.tasks = controller.get_tasks()
-        self.status_filter_list = controller.get_status_filters_list()
+        self.status_options_list = controller.get_status_options_list()
+        self.status_id_filter_list = [option[1] for option in self.status_options_list if len(option)==3]
+        self.filter_tasks_list_by_status_id()
         yield Header()
-        yield ObjectCardsGroup(self.tasks)
+        yield ObjectCardsGroup(self.filtered_tasks)
         yield Footer()
         self.sub_title = 'Main Screen'
         logger.info('Main Screen loaded')
@@ -36,9 +38,18 @@ class MainScreen(Screen):
     def action_filter_tasks(self):
         def check_inputs(inputs: dict[str]) -> None:
             print(inputs)
+            self.tasks = controller.get_tasks()
+            self.status_options_list = controller.get_status_options_list(inputs['status-filter-list'])
+            self.status_id_filter_list = inputs['status-filter-list']
+            self.filter_tasks_list_by_status_id()
+            object_cards_group = self.query_one(ObjectCardsGroup)
+            object_cards_group.clear()
+            for task in self.filtered_tasks:
+                object_cards_group.append(ObjectCard(task))
+            
 
         self.app.push_screen(
-            create_filter_tasks_screen(self.status_filter_list),
+            create_filter_tasks_screen(self.status_options_list),
             check_inputs
         )
 
@@ -63,19 +74,40 @@ class MainScreen(Screen):
         for child in self.walk_children(Collapsible):
             child.collapsed = False
 
+    def filter_tasks_list_by_status_id(self):
+        print('filter_tasks_list_by_status_id:::')
+        print('self.status_id_filter_list')
+        print(type(self.status_id_filter_list))
+        print(self.status_id_filter_list)
+        for status_id in self.status_id_filter_list:
+            print('status_id',type(status_id), status_id)
+        self.filtered_tasks = []
+        for task in self.tasks:
+            print('task.status',type(task.status), int(task.status))
+            for status_id in self.status_id_filter_list:
+                if str(status_id).__eq__(str(task.status)):
+                    self.filtered_tasks.append(task)
+                    next
+        print(self.filtered_tasks)
+           
 
+    
 masks = {
         #'date': '[2][0]99-B9-[0123]9',
         'date': '9999-B9-99',
     }
-
+    
 def create_filter_tasks_screen(status_filter_list):
     statuses = controller.get_statuses_dict()
     filter_tasks_screen = FormScreen(
-        SelectionList(
-            status_filter_list,
-            id='status-filter-list',
-        )
+        [InputWithBorder(
+            title='Choose statuses',
+            widget=SelectionList[int](
+                *status_filter_list,
+                id='status-filter-list',
+                classes='input-with-border-input'
+            ),
+        )]
     )
     return filter_tasks_screen
 

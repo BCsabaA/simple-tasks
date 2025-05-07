@@ -43,7 +43,7 @@ class Task(Table):
     COMPLETION_DATE = Field('completion_date', str)
     STATUS = Field('status', str, foreign_key_table='statuses', foreign_key_column='id')
 
-    def __init__(self, id=None, name="", type_id=None, main_task_id=None, description="", start_date="", deadline="", priority=0, completion_date="", status=1):
+    def __init__(self, id:int=None, name="", type_id:int=None, main_task_id=None, description="", start_date="", deadline="", priority=0, completion_date="", status:int=1):
         self.name = name
         self.type_id = type_id
         self.main_task_id = main_task_id

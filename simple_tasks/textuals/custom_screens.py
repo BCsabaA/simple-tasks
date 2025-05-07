@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea
+from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList
 from textual.containers import Vertical, Grid
 from textuals.custom_widgets import InputWithBorder
 
@@ -112,15 +112,21 @@ class FormScreen(ModalScreen[dict]):
         input_dict = {}
         widgets = self.query_one('#form-screen').children
         print(widgets)
-        for widget in widgets:
+        for i, widget in enumerate(widgets):
             if type(widget) == InputWithBorder:
                 input_field = widget.query_one('.input-with-border-input')
-                print(input_field)
+                print(i, input_field)
                 input_dict.update(
-                    {input_field.id: input_field.text if type(input_field)==TextArea else input_field.value}
+                    {input_field.id: input_field.text
+                     if type(input_field)==TextArea 
+                     else input_field.selected
+                     if type(input_field)==SelectionList
+                     else input_field.value}
                 )
+        statuses = self.query_one(SelectionList).selected
         print('FormScreen before dismiss')
-        print(input_dict)
+        print('FormScreen input dict', input_dict)
+        print(statuses)
         self.dismiss(input_dict)
 
 

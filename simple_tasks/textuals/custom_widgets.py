@@ -102,10 +102,12 @@ class ObjectCard(ListItem):
 class ObjectCardsGroup(ListView):
     def __init__(self, objects: list[object]):
         self.widgets = []
+        print('ObjectCardsGroup:')
+        print(objects)
         for instance in objects:
             self.widgets.append(ObjectCard(instance))
         super().__init__()
-        #print(*self.children)
+        print(*self.children)
 
     def compose(self) -> ComposeResult:
         for widget in self.widgets:
