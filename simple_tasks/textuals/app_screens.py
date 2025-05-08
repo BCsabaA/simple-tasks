@@ -6,6 +6,7 @@ from textuals.custom_screens import QuitScreen, FormScreen
 from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
 from set_logger import set_logger
 import controller
+from models import Task
 
 logger = set_logger(__name__)
 
@@ -15,7 +16,9 @@ class MainScreen(Screen):
         ("q", "request_quit", "Quit"),
         ("f", "filter_tasks", "Filter"),
         ("a", "add_task", "Add task"),
+        ("c", "add_comment", "Add comment"),
         ("m", "modify_task", "Modify task"),
+        ("d", "delete_task", "Delete task"),
         ("s", "change_status", "Change status"),
         ("-", "collapse_all", "Collapse all"),
         ("+", "expand_all", "Expand all"),
@@ -53,6 +56,11 @@ class MainScreen(Screen):
             check_inputs
         )
 
+    def action_modify_task(self):
+        pass
+
+    
+
     def action_add_task(self):
         def check_inputs(inputs: dict[str]) -> None:
             id = controller.create_task_from_dict(inputs)
@@ -62,7 +70,7 @@ class MainScreen(Screen):
             task_list.append(ObjectCard(new_task))
 
         self.app.push_screen(
-            create_add_task_screen(),
+            create_task_screen(),
             check_inputs
         )
 
@@ -111,7 +119,7 @@ def create_filter_tasks_screen(status_filter_list):
     )
     return filter_tasks_screen
 
-def create_add_task_screen():
+def create_task_screen(task: Task=None):
     return FormScreen([
         InputWithBorder(
             title='Name',

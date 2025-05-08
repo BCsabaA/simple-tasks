@@ -58,4 +58,8 @@ def get_status_ids():
         status_ids.append(status.id)
     return status_ids
 
+def get_task_comments(id: int) -> list[str]:
+    db.read(Comment, filters={'id': id})
+    
+
 

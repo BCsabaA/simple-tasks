@@ -1,4 +1,4 @@
-from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem
+from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea
 from textual.app import ComposeResult
 from textual.containers import Vertical
 
@@ -71,6 +71,16 @@ class ObjectCard(ListItem):
                         classes='card-label',
                     )
                 )
+        self.comments = controller.get_task_comments(self.task_id)
+        if self.comments:
+            self.widgets.append(
+                Vertical(
+                    TextArea(
+                        comment.comment
+                    )
+                    for comment in self.comments
+                )
+            )
         super().__init__()
 
     def compose(self) -> ComposeResult:
