@@ -95,3 +95,9 @@ ListItem {
 Footer {
     height: 2;
 }
+
+ObjectCard TextArea{
+    height: auto;
+    margin: 0;
+    background: #3a4352;
+}

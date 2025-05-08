@@ -40,7 +40,6 @@ class MainScreen(Screen):
 
     def action_filter_tasks(self):
         def check_inputs(inputs: dict[str]) -> None:
-            print(inputs)
             self.tasks = controller.get_tasks()
             self.status_options_list = controller.get_status_options_list(inputs['status-filter-list'])
             self.status_id_filter_list = inputs['status-filter-list']
@@ -57,7 +56,23 @@ class MainScreen(Screen):
         )
 
     def action_modify_task(self):
-        pass
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
+        task = controller.get_task_by_id(selected_task.task_id)[0]
+
+        def check_inputs(inputs: dict[str]) -> None:
+            inputs.update({'status_id': self.query_one(ObjectCardsGroup).highlighted_child.status_id})
+            controller.update_task_from_dict(self.query_one(ObjectCardsGroup).highlighted_child.task_id, inputs)
+            self.tasks = controller.get_tasks()
+            self.filter_tasks_list_by_status_id()
+            object_cards_group = self.query_one(ObjectCardsGroup)
+            object_cards_group.clear()
+            for task in self.filtered_tasks:
+                object_cards_group.append(ObjectCard(task))
+
+        self.app.push_screen(
+            create_task_screen(task),
+            check_inputs
+        )
 
     
 
@@ -83,20 +98,12 @@ class MainScreen(Screen):
             child.collapsed = False
 
     def filter_tasks_list_by_status_id(self):
-        print('filter_tasks_list_by_status_id:::')
-        print('self.status_id_filter_list')
-        print(type(self.status_id_filter_list))
-        print(self.status_id_filter_list)
-        for status_id in self.status_id_filter_list:
-            print('status_id',type(status_id), status_id)
         self.filtered_tasks = []
         for task in self.tasks:
-            print('task.status',type(task.status), int(task.status))
             for status_id in self.status_id_filter_list:
                 if str(status_id).__eq__(str(task.status)):
                     self.filtered_tasks.append(task)
                     next
-        print(self.filtered_tasks)
            
 
     
@@ -126,6 +133,7 @@ def create_task_screen(task: Task=None):
             widget=Input(
                 id='name',
                 type='text',
+                value=task.name if task else '',
                 classes='input-with-border-input',
             ),
         ),
@@ -133,6 +141,7 @@ def create_task_screen(task: Task=None):
             title='Description',
             widget=TextArea(
                 id='description',
+                text=task.description if task else '',
                 tab_behavior='indent',
                 classes='input-with-border-input',
                 compact=True,
@@ -153,6 +162,7 @@ def create_task_screen(task: Task=None):
             title='Start date',
             widget=MaskedInput(
                 id='start_date',
+                value=task.start_date if task else '',
                 template=masks['date'],
                 placeholder='YYYY-MM-DD',
                 classes='input-with-border-input',
@@ -162,6 +172,7 @@ def create_task_screen(task: Task=None):
             title='Deadline',
             widget=MaskedInput(
                 id='deadline',
+                value=task.deadline if task else '',
                 template=masks['date'],
                 placeholder='YYYY-MM-DD',
                 classes='input-with-border-input',

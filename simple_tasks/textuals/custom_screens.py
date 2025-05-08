@@ -29,7 +29,6 @@ class QuitScreen(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "quit-button":
-            print('should quit')
             self.app.exit()
             logger.info('App exited')
         else:
@@ -80,7 +79,7 @@ class QuestionScreen(ModalScreen[str]):
 class FormScreen(ModalScreen[dict]):
     def __init__(
             self,
-            widgets: tuple(),
+            widgets: tuple,
             inputs: tuple[dict] = ({'input':'text'}, ),
             ):
         super().__init__()
@@ -88,18 +87,6 @@ class FormScreen(ModalScreen[dict]):
         self.widgets = widgets
 
     def compose(self) -> ComposeResult:
-        print(self.inputs)
-        # widgets = [
-        #     InputWithBorder(
-        #         title=input_field['title'],
-        #         placeholder=input_field['placeholder'] if 'placeholder' in input_field else '',
-        #         id=input_field['id'],
-        #         type=input_field['type'],
-        #         value=input_field['value'] if 'value' in input_field else '',
-        #         mask=input_field['mask'] if 'mask' in input_field else None,
-        #     )
-        #     for input_field in self.inputs
-        #     ]
         self.widgets += [Button(
             'Submit',
             variant='primary',
@@ -111,11 +98,9 @@ class FormScreen(ModalScreen[dict]):
     def on_button_pressed(self, event: Button.Pressed):
         input_dict = {}
         widgets = self.query_one('#form-screen').children
-        print(widgets)
         for i, widget in enumerate(widgets):
             if type(widget) == InputWithBorder:
                 input_field = widget.query_one('.input-with-border-input')
-                print(i, input_field)
                 input_dict.update(
                     {input_field.id: input_field.text
                      if type(input_field)==TextArea 
@@ -123,10 +108,6 @@ class FormScreen(ModalScreen[dict]):
                      if type(input_field)==SelectionList
                      else input_field.value}
                 )
-        statuses = self.query_one(SelectionList).selected
-        print('FormScreen before dismiss')
-        print('FormScreen input dict', input_dict)
-        print(statuses)
         self.dismiss(input_dict)
 
 

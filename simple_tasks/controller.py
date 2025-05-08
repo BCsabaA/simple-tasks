@@ -15,13 +15,32 @@ def create_task_from_dict(data: dict):
         )
     )
     if data['comment'] != '':
-        db.insert(
-            Comment(
-                task_id=id,
-                text=data['comment']
-            )
-        )
+        create_comment_from_dict(data)
     return id
+
+def update_task_from_dict(task_id: int, data: dict):
+    db.update(
+        Task,
+        task_id,
+        {
+            'name': data['name'],
+            'description': data['description'],
+            'start_date': data['start_date'],
+            'deadline': data['deadline'],
+            'priority': data['priority'],
+            'status': data['status_id'],
+        }
+    )
+    if data['comment'] != '':
+        create_comment_from_dict(task_id, data['comment'])
+
+def create_comment_from_dict(task_id: int, comment: str):
+    db.insert(
+        Comment(
+            task_id=task_id,
+            text=comment
+        )
+    )
 
 def get_tasks():
     return db.read(Task, order_by=['start_date', 'priority'])
@@ -59,7 +78,7 @@ def get_status_ids():
     return status_ids
 
 def get_task_comments(id: int) -> list[str]:
-    db.read(Comment, filters={'id': id})
+    return db.read(Comment, filters={'task_id': id})
     
 
 

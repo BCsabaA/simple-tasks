@@ -51,11 +51,9 @@ class InputWithBorder(Static):
 
 class ObjectCard(ListItem):
     def __init__(self, instance: object):
-        #print(instance)
         self.widgets = []
         for param in instance.__dict__:
             param_value = str(instance.__dict__[param])
-            #print(param_value)
             if param == 'name':
                 self.task_name = param_value
             elif param == 'id':
@@ -71,21 +69,17 @@ class ObjectCard(ListItem):
                         classes='card-label',
                     )
                 )
+        print('COMMENTS')
         self.comments = controller.get_task_comments(self.task_id)
-        if self.comments:
-            self.widgets.append(
-                Vertical(
-                    TextArea(
-                        comment.comment
-                    )
-                    for comment in self.comments
-                )
-            )
+        if self.comments not in [None, []]:
+            self.widgets.append(Label('Comments:', classes='card-label'))
+            for comment in self.comments:
+                self.widgets.append(TextArea(comment.text, classes='card-comment'))
         super().__init__()
+        print(self.task_id, self.task_name, self.task_type_id, self.status_id, self.comments)
 
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
-        print(statuses)
         object_card = Collapsible(
             *self.widgets,
             title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})',
@@ -112,12 +106,9 @@ class ObjectCard(ListItem):
 class ObjectCardsGroup(ListView):
     def __init__(self, objects: list[object]):
         self.widgets = []
-        print('ObjectCardsGroup:')
-        print(objects)
         for instance in objects:
             self.widgets.append(ObjectCard(instance))
         super().__init__()
-        print(*self.children)
 
     def compose(self) -> ComposeResult:
         for widget in self.widgets:
