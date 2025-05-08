@@ -1,9 +1,9 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, Static
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, RadioSet
 
 from textuals.custom_screens import QuitScreen, FormScreen
-from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
+from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, ObjectRadioSet
 from set_logger import set_logger
 import controller
 from models import Task
@@ -134,6 +134,14 @@ def create_task_screen(task: Task=None):
                 id='name',
                 type='text',
                 value=task.name if task else '',
+                classes='input-with-border-input',
+            ),
+        ),
+        InputWithBorder(
+            title='Status',
+            display=True if task else False,
+            widget=ObjectRadioSet(
+                objects=controller.get_status_options_list(task=task),
                 classes='input-with-border-input',
             ),
         ),

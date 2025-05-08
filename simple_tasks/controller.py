@@ -53,7 +53,7 @@ def get_statuses_dict():
     statuses_dict = {status.id: status.name for status in statuses}
     return statuses_dict
 
-def get_status_options_list(option_id_list:dict[int]=None):
+def get_status_options_list(option_id_list:dict[int]=None, task:Task=None):
     statuses = db.read(Status)
     status_filter_list = ()
     for status in statuses:
@@ -62,6 +62,11 @@ def get_status_options_list(option_id_list:dict[int]=None):
                 status_filter_list += ((str(status.name), status.id, True), )
             else:
                 status_filter_list += ((str(status.name), status.id, ), )
+        elif task:
+            if str(status.id).__eq__(str(task.status)) or status.id == task.status:
+                status_filter_list += ((str(status.name), status.id, True), )
+            else:
+                status_filter_list += ((str(status.name), status.id), )
         else:
             if status.name == 'not started':
                 status_filter_list += ((str(status.name), status.id, True), )

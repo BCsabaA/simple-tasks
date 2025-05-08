@@ -1,4 +1,4 @@
-from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea
+from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 
@@ -15,10 +15,12 @@ class InputWithBorder(Static):
                  id: str = None,
                  type = 'text',
                  widget = None,
-                 mask = None,):
+                 mask = None,
+                 display = True,):
         super().__init__(id=id)
         self.styles.border_top = ('solid', 'gray')
         self.border_title = title
+        self.display = display
         if widget:
             self.input = widget
         elif mask:
@@ -153,3 +155,20 @@ class ObjectCardsGroup(ListView):
     def on_list_view_selected(self, item):
         item.item.query_one(Collapsible).collapsed = not item.item.query_one(Collapsible).collapsed
 
+
+class ObjectRadioSet(RadioSet):
+    def __init__(self, objects: list, classes='object-radio-set'):
+        self.widgets = []
+        self.classes = classes
+        for instance in objects:
+            self.widgets.append(RadioButton(instance[0], id=instance[1], value=instance[2] if len(instance) > 2 else None))
+        super().__init__(id=id)
+
+    def compose(self) -> ComposeResult:
+        for widget in self.widgets:
+            yield widget
+
+    def _on_radio_set_changed(self, event):
+        self.value = event.pressed.label.id
+        print('ObjectRadioSet self.value', self.value)
+        print(self.index)
