@@ -1,6 +1,6 @@
 from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea
 from textual.app import ComposeResult
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 
 import controller
 
@@ -48,6 +48,16 @@ class InputWithBorder(Static):
     def value(self) -> str:
         return self.input.value
 
+class DoubleLabel(Horizontal):
+    def __init__(self, widget1, widget2, classes='card-label'):
+        super().__init__()
+        self.widget1 = widget1
+        self.widget2 = widget2
+        self.classes = classes
+
+    def compose(self) -> ComposeResult:
+        yield self.widget1
+        yield self.widget2
 
 class ObjectCard(ListItem):
     def __init__(self, instance: object):
@@ -62,10 +72,36 @@ class ObjectCard(ListItem):
                 self.task_type_id = param_value
             elif param == 'status':
                 self.status_id = int(param_value)
+            elif param == 'description':
+                self.widgets.append(
+                    DoubleLabel(
+                        Label(
+                            'Description:',
+                            classes='card-label-left',
+                        ),
+                        TextArea(
+                            param_value,
+                            classes='card-label-right',
+                        ),
+                        classes='card-label',
+                    )
+                )
+                
             elif param_value and instance.__dict__[param] != None:
                 self.widgets.append(
-                    Label(
-                        f'{param}: {param_value}',
+                    # Label(
+                    #     f'{param}: {param_value}',
+                    #     classes='card-label',
+                    # )
+                    DoubleLabel(
+                        Label(
+                            f'{param}:',
+                            classes='card-label-left',
+                        ),
+                        Label(
+                            param_value,
+                            classes='card-label-right',
+                        ),
                         classes='card-label',
                     )
                 )

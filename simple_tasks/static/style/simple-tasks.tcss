@@ -96,8 +96,37 @@ Footer {
     height: 2;
 }
 
-ObjectCard TextArea{
+.card-comment{
     height: auto;
     margin: 0;
     background: #3a4352;
 }
+
+.card-label {
+    width: 100%;
+    height: auto;
+}
+
+.card-label-left, .card-label-right {
+    height: auto;
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+
+.card-label-left {
+    width: 1fr;
+}
+
+.card-label-right {
+    width: 3fr;
+    margin-right: 1;
+}
+
+DoubleLabel TextArea {
+    border: hidden black;
+    background: #404040;
+    margin: 0;
+    padding: 0;
+}
+
