@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, RadioSet
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, RadioSet, OptionList
+from textual.widgets.option_list import Option
 
 from textuals.custom_screens import QuitScreen, FormScreen
 from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, ObjectRadioSet
@@ -32,6 +33,7 @@ class MainScreen(Screen):
         yield Header()
         yield ObjectCardsGroup(self.filtered_tasks)
         yield Footer()
+        self.AUTO_FOCUS = ObjectCardsGroup
         self.sub_title = 'Main Screen'
         logger.info('Main Screen loaded')
 
@@ -57,17 +59,27 @@ class MainScreen(Screen):
 
     def action_modify_task(self):
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
-        task = controller.get_task_by_id(selected_task.task_id)[0]
+        index = self.query_one(ObjectCardsGroup).index
+        task = controller.get_task_by_id(selected_task.task_id)
 
         def check_inputs(inputs: dict[str]) -> None:
-            inputs.update({'status_id': self.query_one(ObjectCardsGroup).highlighted_child.status_id})
-            controller.update_task_from_dict(self.query_one(ObjectCardsGroup).highlighted_child.task_id, inputs)
-            self.tasks = controller.get_tasks()
+            task_id = self.query_one(ObjectCardsGroup).highlighted_child.task_id
+            controller.update_task_from_dict(task_id, inputs)
+            #self.tasks = controller.get_tasks()
+            updated_task = controller.get_task_by_id(task_id)
+            self.tasks.remove(task)
+            self.tasks.append(updated_task)
             self.filter_tasks_list_by_status_id()
             object_cards_group = self.query_one(ObjectCardsGroup)
-            object_cards_group.clear()
-            for task in self.filtered_tasks:
-                object_cards_group.append(ObjectCard(task))
+            # object_cards_group.clear()
+            # for task in self.filtered_tasks:
+            #     object_cards_group.append(ObjectCard(task))
+            object_cards_group.pop(index)
+            object_cards_group.insert(index, [ObjectCard(updated_task)])
+                
+            object_cards_group.focus()
+            if object_cards_group.children:
+                object_cards_group.index = 0
 
         self.app.push_screen(
             create_task_screen(task),
@@ -83,6 +95,10 @@ class MainScreen(Screen):
             new_task = controller.get_task_by_id(id)[0]
             self.tasks = controller.get_tasks()
             task_list.append(ObjectCard(new_task))
+
+            task_list.focus()
+            if task_list.children:
+                task_list.index = task_list.children.count - 1
 
         self.app.push_screen(
             create_task_screen(),
@@ -127,6 +143,11 @@ def create_filter_tasks_screen(status_filter_list):
     return filter_tasks_screen
 
 def create_task_screen(task: Task=None):
+    options = []
+    for status in controller.get_status_options_list(task=task):
+        options.append(
+            Option(status[0], status[1])
+        )
     return FormScreen([
         InputWithBorder(
             title='Name',
@@ -140,10 +161,11 @@ def create_task_screen(task: Task=None):
         InputWithBorder(
             title='Status',
             display=True if task else False,
-            widget=ObjectRadioSet(
-                objects=controller.get_status_options_list(task=task),
+            widget=OptionList(
+                *options,
                 classes='input-with-border-input',
-            ),
+                id='status_id'
+            )
         ),
         InputWithBorder(
             title='Description',

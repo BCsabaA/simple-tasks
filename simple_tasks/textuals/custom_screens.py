@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList
+from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList
 from textual.containers import Vertical, Grid
 from textuals.custom_widgets import InputWithBorder
 
@@ -106,8 +106,12 @@ class FormScreen(ModalScreen[dict]):
                      if type(input_field)==TextArea 
                      else input_field.selected
                      if type(input_field)==SelectionList
+                     else input_field.get_option_at_index(input_field.highlighted).id
+                     if type(input_field)==OptionList
                      else input_field.value}
                 )
+        print('INPUT DICT')
+        print(input_dict)
         self.dismiss(input_dict)
 
 
