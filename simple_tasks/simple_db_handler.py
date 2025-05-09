@@ -118,8 +118,24 @@ class Database():
         Database.DATABASE.close()
         LOGGER.info(f'class Database: update(): {obj_class.TABLENAME} {id} updated')
 
-    def delete(self, obj_class, id):
-        self.update(obj_class, id, {'deleted': True})
+    def delete(self, obj_class, id=None, filters: dict=None):
+        if filters:
+            create_delete_query = f'DELETE FROM {obj_class.TABLENAME} WHERE '
+            for key, value in filters.items():
+                create_delete_query += f'{key} LIKE ? AND '
+            create_delete_query = create_delete_query[:-5]
+        elif id:
+            create_delete_query = f'DELETE FROM {obj_class.TABLENAME} WHERE id=?'
+        else:
+            LOGGER.info('class Database: delete(): No id or filters provided')
+            return
+        if not Database.DATABASE:
+            LOGGER.info('class Database: delete(): No database, returning')
+            return
+        Database.DATABASE.open()
+        Database.DATABASE.cursor.execute(create_delete_query, (id,))
+        Database.DATABASE.commit()
+        Database.DATABASE.close()
         LOGGER.info(f'class Database: delete(): {obj_class.TABLENAME} {id} deleted')
 
     def __str__(self):

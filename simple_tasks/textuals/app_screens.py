@@ -1,10 +1,10 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, RadioSet, OptionList
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView
 from textual.widgets.option_list import Option
 
-from textuals.custom_screens import QuitScreen, FormScreen
-from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, ObjectRadioSet
+from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen
+from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
 from set_logger import set_logger
 import controller
 from models import Task
@@ -40,26 +40,71 @@ class MainScreen(Screen):
     def action_request_quit(self):
         self.app.push_screen(QuitScreen())
 
-    def action_filter_tasks(self):
-        def check_inputs(inputs: dict[str]) -> None:
+    def action_delete_task(self):
+        index = self.query_one(ObjectCardsGroup).index
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
+        task = controller.get_task_by_id(selected_task.task_id)
+
+        def check_answer(answer: str) -> None:
+            if answer == 'No':
+                return
+            controller.delete_task(task)
+            self.tasks.remove(task)
+            self.filter_tasks_list_by_status_id()
+            self.query_one(ObjectCardsGroup).pop(index)
+            self.notify(f'Task #{task.id} {task.name} deleted', severity='information', timeout=5)
+            self.focus_and_select_listview(ObjectCardsGroup)
+            
+
+        self.app.push_screen(
+            QuestionScreen(
+                title='Delete task',
+                question=f'Are you sure you want to delete task #{task.id} {task.name}? This action cannot be undone.',
+                answers=['Yes', 'No']
+            ),
+            check_answer
+        )
+
+    async def action_filter_tasks(self):
+        async def check_inputs(inputs: dict[str]) -> None:
             self.tasks = controller.get_tasks()
             self.status_options_list = controller.get_status_options_list(inputs['status-filter-list'])
             self.status_id_filter_list = inputs['status-filter-list']
             self.filter_tasks_list_by_status_id()
-            object_cards_group = self.query_one(ObjectCardsGroup)
-            object_cards_group.clear()
-            for task in self.filtered_tasks:
-                object_cards_group.append(ObjectCard(task))
+
+            await self.fill_object_cards_group(self.filtered_tasks)
+            await self.focus_and_select_listview(ObjectCardsGroup)
+            await self.object_cards_group_refresh()
             
+            self.notify(f'New filter applied', severity='information', timeout=5)
 
         self.app.push_screen(
             create_filter_tasks_screen(self.status_options_list),
             check_inputs
         )
 
+    async def object_cards_group_refresh(self):
+        object_cards_group = self.query_one(ObjectCardsGroup)
+        object_cards_group.refresh()
+
+    async def focus_and_select_listview(self, listview: ListView, select_index: int=0, select_last: bool=False):
+        focus_listview = self.query_one(listview)
+        focus_listview.focus()
+        if select_last:
+            focus_listview.index = len(listview.children) - 1
+        else:
+            focus_listview.index = select_index
+
+    async def fill_object_cards_group(self, task_list: list[Task]):
+        object_cards_group = self.query_one(ObjectCardsGroup)
+        object_cards_group.clear()
+        for task in task_list:
+                object_cards_group.append(ObjectCard(task))
+
     def action_modify_task(self):
-        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         index = self.query_one(ObjectCardsGroup).index
+        print('***** action_modify_task index', index)
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
         def check_inputs(inputs: dict[str]) -> None:
@@ -76,6 +121,8 @@ class MainScreen(Screen):
             #     object_cards_group.append(ObjectCard(task))
             object_cards_group.pop(index)
             object_cards_group.insert(index, [ObjectCard(updated_task)])
+            
+            self.notify(f'Task #{updated_task.id} {updated_task.name} modified', severity='information', timeout=5)
                 
             object_cards_group.focus()
             if object_cards_group.children:
@@ -92,13 +139,15 @@ class MainScreen(Screen):
         def check_inputs(inputs: dict[str]) -> None:
             id = controller.create_task_from_dict(inputs)
             task_list = self.query_one(ObjectCardsGroup)
-            new_task = controller.get_task_by_id(id)[0]
+            new_task = controller.get_task_by_id(id)
             self.tasks = controller.get_tasks()
             task_list.append(ObjectCard(new_task))
 
+            self.notify(f'Task #{new_task.id} {new_task.name} added', severity='information', timeout=5)
+
             task_list.focus()
             if task_list.children:
-                task_list.index = task_list.children.count - 1
+                task_list.index = len(task_list.children) - 1
 
         self.app.push_screen(
             create_task_screen(),
@@ -140,6 +189,7 @@ def create_filter_tasks_screen(status_filter_list):
             ),
         )]
     )
+
     return filter_tasks_screen
 
 def create_task_screen(task: Task=None):

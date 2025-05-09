@@ -1,5 +1,5 @@
 
-QuitScreen, FormScreen {
+QuitScreen, FormScreen, QuestionScreen {
     align: center middle;
 }
 
@@ -128,5 +128,9 @@ DoubleLabel TextArea {
     background: #404040;
     margin: 0;
     padding: 0;
+}
+
+ToastRack {
+    align: center top;
 }
 
