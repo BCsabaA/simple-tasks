@@ -40,6 +40,25 @@ class MainScreen(Screen):
     def action_request_quit(self):
         self.app.push_screen(QuitScreen())
 
+    def action_add_comment(self):
+        index = self.query_one(ObjectCardsGroup).index
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
+        task = controller.get_task_by_id(selected_task.task_id)
+
+        def check_inputs(inputs: dict[str]) -> None:
+            controller.create_comment_from_dict(task.id, inputs['comment'])
+            self.tasks = controller.get_tasks()
+            self.filter_tasks_list_by_status_id()
+            self.query_one(ObjectCardsGroup).pop(index)
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task)])
+            self.notify(f'Comment added to task #{task.id} {task.name}', severity='information', timeout=5)
+            self.focus_and_select_listview(ObjectCardsGroup)
+
+        self.app.push_screen(
+            create_add_comment_screen(),
+            check_inputs
+        )
+
     def action_delete_task(self):
         index = self.query_one(ObjectCardsGroup).index
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
@@ -171,6 +190,19 @@ class MainScreen(Screen):
                     next
            
 
+def create_add_comment_screen():
+    return FormScreen([
+        InputWithBorder(
+            title='Comment',
+            widget=TextArea(
+                id='comment',
+                tab_behavior='indent',
+                classes='input-with-border-input',
+                compact=True,
+                tooltip='TAB for indent, ESC for focus next input',
+            ),
+        ),
+    ])
     
 masks = {
         #'date': '[2][0]99-B9-[0123]9',
