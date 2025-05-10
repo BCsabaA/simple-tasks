@@ -40,8 +40,18 @@ class MainScreen(Screen):
     def action_request_quit(self):
         self.app.push_screen(QuitScreen())
 
+    def action_change_status(self):
+        def check_inputs(inputs: dict) -> None:
+            pass
+
+        self.app.push_screen(
+            create_status_screen(),
+            check_inputs
+        )
+
     def action_add_comment(self):
         index = self.query_one(ObjectCardsGroup).index
+        collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
@@ -50,9 +60,9 @@ class MainScreen(Screen):
             self.tasks = controller.get_tasks()
             self.filter_tasks_list_by_status_id()
             self.query_one(ObjectCardsGroup).pop(index)
-            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task)])
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task, collapsed=collapsed_state)])
             self.notify(f'Comment added to task #{task.id} {task.name}', severity='information', timeout=5)
-            self.focus_and_select_listview(ObjectCardsGroup)
+            self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
             create_add_comment_screen(),
@@ -129,15 +139,11 @@ class MainScreen(Screen):
         def check_inputs(inputs: dict[str]) -> None:
             task_id = self.query_one(ObjectCardsGroup).highlighted_child.task_id
             controller.update_task_from_dict(task_id, inputs)
-            #self.tasks = controller.get_tasks()
             updated_task = controller.get_task_by_id(task_id)
             self.tasks.remove(task)
             self.tasks.append(updated_task)
             self.filter_tasks_list_by_status_id()
             object_cards_group = self.query_one(ObjectCardsGroup)
-            # object_cards_group.clear()
-            # for task in self.filtered_tasks:
-            #     object_cards_group.append(ObjectCard(task))
             object_cards_group.pop(index)
             object_cards_group.insert(index, [ObjectCard(updated_task)])
             
@@ -208,6 +214,9 @@ masks = {
         #'date': '[2][0]99-B9-[0123]9',
         'date': '9999-B9-99',
     }
+
+def create_status_screen():
+    pass
     
 def create_filter_tasks_screen(status_filter_list):
     statuses = controller.get_statuses_dict()

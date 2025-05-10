@@ -62,8 +62,9 @@ class DoubleLabel(Horizontal):
         yield self.widget2
 
 class ObjectCard(ListItem):
-    def __init__(self, instance: object):
+    def __init__(self, instance: object, collapsed: bool=True):
         self.widgets = []
+        self.collapsed = collapsed
         for param in instance.__dict__:
             param_value = str(instance.__dict__[param])
             if param == 'name':
@@ -121,6 +122,7 @@ class ObjectCard(ListItem):
         object_card = Collapsible(
             *self.widgets,
             title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})',
+            collapsed=self.collapsed
         )
 
         if self.status_id == 1:
