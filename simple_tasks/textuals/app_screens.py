@@ -215,8 +215,10 @@ masks = {
         'date': '9999-B9-99',
     }
 
-def create_status_screen():
-    pass
+def create_status_screen(task:Task):
+    status_options_list = controller.get_status_options_list(task=task)
+    print(status_options_list)
+    return #status_screen
     
 def create_filter_tasks_screen(status_filter_list):
     statuses = controller.get_statuses_dict()
