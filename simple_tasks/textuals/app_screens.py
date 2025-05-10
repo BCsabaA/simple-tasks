@@ -41,11 +41,22 @@ class MainScreen(Screen):
         self.app.push_screen(QuitScreen())
 
     def action_change_status(self):
+        index = self.query_one(ObjectCardsGroup).index
+        collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
+        task = controller.get_task_by_id(selected_task.task_id)
         def check_inputs(inputs: dict) -> None:
-            pass
+            controller.update_task_status_from_dict(task.id, inputs)
+            updated_task = controller.get_task_by_id(task.id)
+            self.tasks = controller.get_tasks()
+            self.filter_tasks_list_by_status_id()
+            self.query_one(ObjectCardsGroup).pop(index)
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, collapsed=collapsed_state)])
+            self.notify(f'Status changed for task #{task.id} {task.name}', severity='information', timeout=5)
+            self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
-            create_status_screen(),
+            create_status_screen(task=task),
             check_inputs
         )
 
@@ -217,8 +228,23 @@ masks = {
 
 def create_status_screen(task:Task):
     status_options_list = controller.get_status_options_list(task=task)
+    options = []
+    for status in status_options_list:
+        options.append(
+            Option(status[0], status[1])
+        )
     print(status_options_list)
-    return #status_screen
+    status_screen = FormScreen([
+        InputWithBorder(
+            title=f'Change status for #{task.id}',
+            widget=OptionList(
+                *options,
+                id='status_id',
+                classes='input-with-border-input',
+            )
+        )
+    ])
+    return status_screen
     
 def create_filter_tasks_screen(status_filter_list):
     statuses = controller.get_statuses_dict()

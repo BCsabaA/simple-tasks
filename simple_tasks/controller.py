@@ -44,6 +44,18 @@ def create_comment_from_dict(task_id: int, comment: str):
         )
     )
 
+def update_task_status_from_dict(task_id: int, data: dict):
+    print('***** update_task_status_from_dict *****')
+    print(task_id)
+    print(data)
+    db.update(
+        Task,
+        task_id,
+        {
+            'status': data['status_id'],
+        }
+    )
+
 def get_tasks():
     return db.read(Task, order_by=['start_date', 'priority'])
 
