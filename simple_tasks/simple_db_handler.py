@@ -41,6 +41,9 @@ class Database():
     def open(self):
         self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
+        self.cursor.execute('PRAGMA foreign_keys = ON;')
+        self.conn.commit()
+        print('***** simple_db_handler.py *****', 'PRAGMA foreign_keys = ON;')
         LOGGER.info(f'class Database: open(): Database opened')
 
     def rollback(self):
