@@ -200,13 +200,15 @@ class Table():
             if field.not_null:
                 create_table_query += ' NOT NULL'
             if field.foreign_key_table is not None:
-                create_table_query += f' REFERENCES {field.foreign_key_table}({field.foreign_key_column})'
+                create_table_query += f' REFERENCES {field.foreign_key_table}({field.foreign_key_column}) ON DELETE {field.on_delete} ON UPDATE {field.on_update}'
             create_table_query += ', '
         create_table_query = create_table_query[:-2] + ')'
         LOGGER.info(f'class Table: parse_object_to_table(): create_table_query: {create_table_query}')
         if not Database.DATABASE:
             LOGGER.info('class Table: parse_object_to_table(): No database, returning')
             return
+        print('create_table_query')
+        print(create_table_query)
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_table_query)
         Database.DATABASE.commit()
@@ -216,7 +218,7 @@ class Table():
 
 
 class Field():
-    def __init__(self, name, type, default=None, primary_key=False, autoincrement=False, unique=False, not_null=False, foreign_key_table=None, foreign_key_column=None):
+    def __init__(self, name, type, default=None, primary_key=False, autoincrement=False, unique=False, not_null=False, foreign_key_table=None, foreign_key_column=None, on_delete='NO ACTION', on_update='NO ACTION'):
         self.name = name
         self.type = type
         self.default = default
@@ -226,6 +228,9 @@ class Field():
         self.not_null = not_null
         self.foreign_key_table = foreign_key_table
         self.foreign_key_column = foreign_key_column
+        self.on_delete = on_delete
+        self.on_update = on_update
+        
         LOGGER.info(f'class Field: __init__(): Field {self.name} created: {self.__dict__}')
 
 

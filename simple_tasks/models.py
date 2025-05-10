@@ -63,7 +63,7 @@ class Task(Table):
 class Comment(Table):
     TABLENAME = 'comments'
     ID = Field('id', int, primary_key=True, autoincrement=True)
-    TASK_ID = Field('task_id', int, foreign_key_table='tasks', foreign_key_column='id')
+    TASK_ID = Field('task_id', int, foreign_key_table='tasks', foreign_key_column='id', on_delete= 'CASCADE', on_update='CASCADE')
     TEXT = Field('text', str)
 
     def __init__(self, id=None, task_id=None, text=""):

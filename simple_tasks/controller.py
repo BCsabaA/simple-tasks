@@ -51,7 +51,6 @@ def get_task_by_id(id: int) -> Task:
     return db.read(Task, {'id': id})[0]
 
 def delete_task(task: Task):
-    db.delete(Comment, filters={'task_id': task.id})
     db.delete(Task, task.id)
 
 def get_statuses_dict():
