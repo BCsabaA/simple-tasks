@@ -14,7 +14,7 @@ Label {
     width: 100%;
     text-align: center;
     padding: 0;
-    padding-bottom: 1;
+    padding-bottom: 0;
 }
 
 Button {
@@ -56,6 +56,10 @@ FormScreen #description, FormScreen #comment {
 
 ListItem {
     padding-left: 1;
+}
+
+Collapsible {
+    padding: 0;
 }
 
 .card-label {

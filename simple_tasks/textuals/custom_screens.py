@@ -100,6 +100,10 @@ class QuestionScreen(ModalScreen[str]):
 
         
 class FormScreen(ModalScreen[dict]):
+    BINDINGS = [
+        ("escape", "close_screen", "Quit"),
+    ]
+    
     def __init__(
             self,
             widgets: tuple,
@@ -117,6 +121,10 @@ class FormScreen(ModalScreen[dict]):
         yield Vertical(
             *self.widgets,
             id='form-screen')
+        yield Footer()
+
+    def action_close_screen(self):
+        self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed):
         input_dict = {}

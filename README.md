@@ -14,7 +14,12 @@
 ## Todo
 
 - [x] help screen with app informations
+- [x] modify task screen doesn't show initial status
+- [ ] filter status screen have to have shortcut for select all and deselect all statuses
+- [ ] when app starts, not started tasks where deadline is in the past have to set to delayed
+- [ ] main screen have to show active and delayed tasks instead of not started ones
 - [ ] every task can contain subtasks, and subtasks can contain other subtasks
 - [ ] user settings for initial status filter
 - [ ] new task parameter: duration
 - [ ] new screen: calendar view
+- [ ] every morning (time should set in user settings) email or other notification with the active and delayed tasks

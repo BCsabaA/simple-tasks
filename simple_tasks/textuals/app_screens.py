@@ -238,20 +238,12 @@ masks = {
 
 def create_status_screen(task:Task):
     status_options_list = controller.get_status_options_list(task=task)
-    options = []
-    for status in status_options_list:
-        options.append(
-            Option(status[0], status[1])
-        )
+    option_list_object = create_option_list_object(status_options_list)
     print(status_options_list)
     status_screen = FormScreen([
         InputWithBorder(
             title=f'Change status for #{task.id}',
-            widget=OptionList(
-                *options,
-                id='status_id',
-                classes='input-with-border-input',
-            )
+            widget=option_list_object
         )
     ])
     return status_screen
@@ -271,11 +263,27 @@ def create_filter_tasks_screen(status_filter_list):
 
     return filter_tasks_screen
 
-def create_task_screen(task: Task=None):
+def create_option_list_object(status_options_list: list):
     options = []
-    for status in controller.get_status_options_list(task=task):
+    index = 0
+    for i, status in enumerate(status_options_list):
+        if len(status)==3:
+            index = i
         options.append(
-            Option(status[0], status[1])
+                Option(status[0], status[1])
+        )
+    option_list_object = OptionList(
+                *options,
+                classes='input-with-border-input',
+                id='status_id'
+            )
+    option_list_object.highlighted = index
+    return option_list_object
+
+def create_task_screen(task: Task=None):
+    status_options_list = controller.get_status_options_list(task=task)
+    option_list_object = create_option_list_object(
+        status_options_list
         )
     return FormScreen([
         InputWithBorder(
@@ -290,11 +298,7 @@ def create_task_screen(task: Task=None):
         InputWithBorder(
             title='Status',
             display=True if task else False,
-            widget=OptionList(
-                *options,
-                classes='input-with-border-input',
-                id='status_id'
-            )
+            widget=option_list_object
         ),
         InputWithBorder(
             title='Description',
@@ -341,8 +345,8 @@ def create_task_screen(task: Task=None):
             title='Priority',
             widget=Input(
                 id='priority',
+                value=str(task.priority) if task else '1',
                 type='integer',
-                value='1',
                 classes='input-with-border-input',
             ),
         ),
