@@ -10,3 +10,12 @@
 - +: expand all tasks
 - -: collapse all tasks
 - return: toggle highligthed task
+- ?: informations
+
+## Todo
+
+- [x] help screen with app informations
+- [ ] every task can contain subtasks, and subtasks can contain other subtasks
+- [ ] user settings for initial status filter
+- [ ] new task parameter: duration
+- [ ] new screen: calendar view

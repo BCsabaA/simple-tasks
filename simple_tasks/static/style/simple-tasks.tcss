@@ -3,7 +3,7 @@ QuitScreen, FormScreen, QuestionScreen, InfoScreen {
     align: center middle;
 }
 
-Grid, Vertical {
+#quit-dialog, #question-dialog, #form-screen {
     width: 50%;
     height: auto;
     background: $surface;
@@ -90,12 +90,6 @@ ListItem {
     background: #282928;
 }
 
-
-
-Footer {
-    height: 2;
-}
-
 .card-comment{
     height: auto;
     margin: 0;
@@ -143,5 +137,9 @@ MarkdownViewer {
     margin: 0;
     padding: 0;
     align: center top;
+}
+
+MardownViewer>Grid {
+    width: 100%;
 }
 
