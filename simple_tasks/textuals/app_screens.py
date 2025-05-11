@@ -66,14 +66,14 @@ class MainScreen(Screen):
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
-        def check_inputs(inputs: dict[str]) -> None:
+        async def check_inputs(inputs: dict[str]) -> None:
             controller.create_comment_from_dict(task.id, inputs['comment'])
             self.tasks = controller.get_tasks()
             self.filter_tasks_list_by_status_id()
             self.query_one(ObjectCardsGroup).pop(index)
             self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task, collapsed=collapsed_state)])
             self.notify(f'Comment added to task #{task.id} {task.name}', severity='information', timeout=5)
-            self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
+            await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
             create_add_comment_screen(),

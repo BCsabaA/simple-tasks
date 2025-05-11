@@ -130,6 +130,10 @@ DoubleLabel TextArea {
     padding: 0;
 }
 
+Toast {
+    padding: 1;
+}
+
 ToastRack {
     align: center top;
 }

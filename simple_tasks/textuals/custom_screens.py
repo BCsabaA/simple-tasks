@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList
+from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer
 from textual.containers import Vertical, Grid
 from textuals.custom_widgets import InputWithBorder
 
@@ -34,6 +34,18 @@ class QuitScreen(ModalScreen):
         else:
             self.app.pop_screen()
 
+
+class InfoScreen(ModalScreen):
+    def __init__(
+            self,
+            title: str='Informations',
+            text: str='# Informations'):
+        self.title = title
+        self.text = text
+
+    def compose(self) -> ComposeResult:
+        pass
+            
 
 class QuestionScreen(ModalScreen[str]):
     def __init__(self,
