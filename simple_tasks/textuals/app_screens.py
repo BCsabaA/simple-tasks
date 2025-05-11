@@ -3,7 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView
 from textual.widgets.option_list import Option
 
-from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen
+from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen, InfoScreen
 from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
 from set_logger import set_logger
 import controller
@@ -23,6 +23,7 @@ class MainScreen(Screen):
         ("s", "change_status", "Change status"),
         ("-", "collapse_all", "Collapse all"),
         ("+", "expand_all", "Expand all"),
+        ("?", "show_info", "Info")
     ]
 
     def compose(self) -> ComposeResult:
@@ -39,6 +40,11 @@ class MainScreen(Screen):
 
     def action_request_quit(self):
         self.app.push_screen(QuitScreen())
+
+    def action_show_info(self):
+        text = get_text_from_readme_md()
+
+        self.app.push_screen(InfoScreen(text=text))
 
     def action_change_status(self):
         index = self.query_one(ObjectCardsGroup).index
@@ -206,6 +212,10 @@ class MainScreen(Screen):
                     self.filtered_tasks.append(task)
                     next
            
+
+def get_text_from_readme_md():
+    with open('README.md', 'r') as f:
+        return f.read()
 
 def create_add_comment_screen():
     return FormScreen([

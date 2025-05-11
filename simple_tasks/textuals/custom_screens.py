@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer
+from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer, Footer, Header
 from textual.containers import Vertical, Grid
 from textuals.custom_widgets import InputWithBorder
 
@@ -36,15 +36,26 @@ class QuitScreen(ModalScreen):
 
 
 class InfoScreen(ModalScreen):
+
+    BINDINGS = [
+        ("escape", "close_info_screen", "Quit"),
+    ]
+
     def __init__(
             self,
             title: str='Informations',
             text: str='# Informations'):
-        self.title = title
+        super().__init__()
+        self.sub_title = title
         self.text = text
 
     def compose(self) -> ComposeResult:
-        pass
+        yield Header()
+        yield MarkdownViewer(self.text, id='info-screen', show_table_of_contents=False)
+        yield Footer()
+
+    def action_close_info_screen(self):
+        self.app.pop_screen()
             
 
 class QuestionScreen(ModalScreen[str]):

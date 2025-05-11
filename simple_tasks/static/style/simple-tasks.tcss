@@ -1,5 +1,5 @@
 
-QuitScreen, FormScreen, QuestionScreen {
+QuitScreen, FormScreen, QuestionScreen, InfoScreen {
     align: center middle;
 }
 
@@ -135,6 +135,13 @@ Toast {
 }
 
 ToastRack {
+    align: center top;
+}
+
+MarkdownViewer {
+    width: 100%;
+    margin: 0;
+    padding: 0;
     align: center top;
 }
 
