@@ -1,6 +1,8 @@
 from simple_db_handler import Database, Table, Field
 from models import Task, Comment, TaskType, Status
 
+import datetime
+
 
 db = Database('data/tasks.db')
 
@@ -57,6 +59,12 @@ def update_task_status_from_dict(task_id: int, data: dict):
     )
 
 def get_tasks():
+    date_today = str(datetime.date.today())
+    print(date_today)
+    sql = f'update tasks set status = 3 where date(start_date) < "{date_today}" and status = 1;'
+    print(sql)
+    tasks = db.execute(sql)
+    print(tasks)
     return db.read(Task, order_by=['start_date', 'priority'])
 
 def get_task_by_id(id: int) -> Task:
