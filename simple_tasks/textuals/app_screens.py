@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collap
 from textual.widgets.option_list import Option
 
 from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen, InfoScreen
-from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard
+from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList
 from set_logger import set_logger
 import controller
 from models import Task
@@ -253,8 +253,8 @@ def create_filter_tasks_screen(status_filter_list):
     filter_tasks_screen = FormScreen(
         [InputWithBorder(
             title='Choose statuses',
-            widget=SelectionList[int](
-                *status_filter_list,
+            widget=CustomSelectionList(
+                status_filter_list,
                 id='status-filter-list',
                 classes='input-with-border-input'
             ),

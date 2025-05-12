@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer, Footer, Header
 from textual.containers import Vertical, Grid
-from textuals.custom_widgets import InputWithBorder
+from textuals.custom_widgets import InputWithBorder, CustomSelectionList
 
 from set_logger import set_logger
 
@@ -136,7 +136,7 @@ class FormScreen(ModalScreen[dict]):
                     {input_field.id: input_field.text
                      if type(input_field)==TextArea 
                      else input_field.selected
-                     if type(input_field)==SelectionList
+                     if type(input_field)==CustomSelectionList
                      else input_field.get_option_at_index(input_field.highlighted).id
                      if type(input_field)==OptionList
                      else input_field.value}

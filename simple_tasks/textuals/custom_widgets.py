@@ -1,4 +1,4 @@
-from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton
+from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 
@@ -176,3 +176,32 @@ class ObjectRadioSet(RadioSet):
         self.value = event.pressed.label.id
         print('ObjectRadioSet self.value', self.value)
         print(self.index)
+
+
+class CustomSelectionList(SelectionList[int]):
+    BINDINGS = [
+        ('s', 'select_all(True)', 'Select all'),
+        ('d', 'select_all(False)', 'Deselect all'),
+    ]
+    
+    def __init__(self, selections, id, classes):
+        super().__init__(*selections, id=id,)
+        self.selection_count = len(selections)
+        self.classes = classes
+        self.all_selections_true_list = [
+            (selection[0],
+             selection[1],
+             True)
+            for selection in selections
+        ]
+
+    def action_select_all(self, select_all:bool) -> None:
+        print(self.id)
+        print(self.selected)
+        print(select_all, type(select_all))
+        if select_all==True:
+            for i, selection in enumerate(self.all_selections_true_list):
+                self.select(i+1)
+        else:
+            self.deselect_all()
+            
