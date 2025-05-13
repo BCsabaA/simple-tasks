@@ -1,4 +1,6 @@
 
+
+
 QuitScreen, FormScreen, QuestionScreen, InfoScreen {
     align: center middle;
 }
@@ -68,30 +70,31 @@ Collapsible {
 }
 
 .card-not-started {
-    background: #182e52
+    background: #e6b800
 }
 
 .card-started {
-    background: #154717;
+    background: #004d99;
 }
 
 .card-delayed {
-    background: #521a18;
+    background: #b30000;
 }
 
 .card-done {
-    background: #4a4646;
+    background: #269900;
 }
 .card-blocked {
-    background: #73702a;
+    background: #e6e600;
+    color: black;
 }
 
 .card-skipped {
-    background: #5c545b;
+    background: $surface;
 }
 
 .card-deleted {
-    background: #282928;
+    background: $surface;
 }
 
 .card-comment{
