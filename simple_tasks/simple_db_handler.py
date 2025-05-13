@@ -43,7 +43,6 @@ class Database():
         self.cursor = self.conn.cursor()
         self.cursor.execute('PRAGMA foreign_keys = ON;')
         self.conn.commit()
-        print('***** simple_db_handler.py *****', 'PRAGMA foreign_keys = ON;')
         LOGGER.info(f'class Database: open(): Database opened')
 
     def rollback(self):
@@ -210,8 +209,6 @@ class Table():
         if not Database.DATABASE:
             LOGGER.info('class Table: parse_object_to_table(): No database, returning')
             return
-        print('create_table_query')
-        print(create_table_query)
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_table_query)
         Database.DATABASE.commit()

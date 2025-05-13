@@ -20,6 +20,7 @@ class MainScreen(Screen):
         ("c", "add_comment", "Add comment"),
         ("m", "modify_task", "Modify task"),
         ("d", "delete_task", "Delete task"),
+        ("ctrl+d", "delete_all_tasks", "Delete all tasks"),
         ("s", "change_status", "Change status"),
         ("-", "collapse_all", "Collapse all"),
         ("+", "expand_all", "Expand all"),
@@ -31,8 +32,9 @@ class MainScreen(Screen):
         self.status_options_list = controller.get_status_options_list()
         self.status_id_filter_list = [option[1] for option in self.status_options_list if len(option)==3]
         self.filter_tasks_list_by_status_id()
+        self.active_tasks = controller.get_active_tasks()
         yield Header()
-        yield ObjectCardsGroup(self.filtered_tasks)
+        yield ObjectCardsGroup(self.active_tasks)
         yield Footer()
         self.AUTO_FOCUS = ObjectCardsGroup
         self.sub_title = 'Main Screen'
@@ -111,6 +113,25 @@ class MainScreen(Screen):
             check_answer
         )
 
+    def action_delete_all_tasks(self):
+        def check_answer(answer: str) -> None:
+            if answer == 'No':
+                return
+            controller.delete_all_tasks()
+            self.tasks = []
+            self.filtered_tasks = []
+            self.active_tasks = []
+            self.query_one(ObjectCardsGroup).clear()
+
+        self.app.push_screen(
+            QuestionScreen(
+                title='Delete all tasks',
+                question=f'Are you sure you want to delete all tasks? This action cannot be undone You will not be able to restore the deleted tasks!',
+                answers=['Yes', 'No']
+            ),
+            check_answer
+        )
+
     async def action_filter_tasks(self):
         async def check_inputs(inputs: dict[str]) -> None:
             self.tasks = controller.get_tasks()
@@ -144,12 +165,13 @@ class MainScreen(Screen):
     async def fill_object_cards_group(self, task_list: list[Task]):
         object_cards_group = self.query_one(ObjectCardsGroup)
         object_cards_group.clear()
+        if task_list == []:
+            task_list = controller.get_active_tasks()
         for task in task_list:
                 object_cards_group.append(ObjectCard(task))
 
     def action_modify_task(self):
         index = self.query_one(ObjectCardsGroup).index
-        print('***** action_modify_task index', index)
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
@@ -214,7 +236,7 @@ class MainScreen(Screen):
            
 
 def get_text_from_readme_md():
-    with open('README.md', 'r') as f:
+    with open('../README.md', 'r') as f:
         return f.read()
 
 def create_add_comment_screen():
@@ -239,7 +261,6 @@ masks = {
 def create_status_screen(task:Task):
     status_options_list = controller.get_status_options_list(task=task)
     option_list_object = create_option_list_object(status_options_list)
-    print(status_options_list)
     status_screen = FormScreen([
         InputWithBorder(
             title=f'Change status for #{task.id}',

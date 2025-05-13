@@ -108,14 +108,12 @@ class ObjectCard(ListItem):
                         classes='card-label',
                     )
                 )
-        print('COMMENTS')
         self.comments = controller.get_task_comments(self.task_id)
         if self.comments not in [None, []]:
             self.widgets.append(Label('Comments:', classes='card-label'))
             for comment in self.comments:
                 self.widgets.append(TextArea(comment.text, classes='card-comment'))
         super().__init__()
-        print(self.task_id, self.task_name, self.task_type_id, self.status_id, self.comments)
 
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
@@ -174,8 +172,6 @@ class ObjectRadioSet(RadioSet):
 
     def _on_radio_set_changed(self, event):
         self.value = event.pressed.label.id
-        print('ObjectRadioSet self.value', self.value)
-        print(self.index)
 
 
 class CustomSelectionList(SelectionList[int]):
@@ -196,9 +192,6 @@ class CustomSelectionList(SelectionList[int]):
         ]
 
     def action_select_all(self, select_all:bool) -> None:
-        print(self.id)
-        print(self.selected)
-        print(select_all, type(select_all))
         if select_all==True:
             for i, selection in enumerate(self.all_selections_true_list):
                 self.select(i+1)

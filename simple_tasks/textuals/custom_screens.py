@@ -141,8 +141,6 @@ class FormScreen(ModalScreen[dict]):
                      if type(input_field)==OptionList
                      else input_field.value}
                 )
-        print('INPUT DICT')
-        print(input_dict)
         self.dismiss(input_dict)
 
 

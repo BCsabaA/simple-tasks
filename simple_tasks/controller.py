@@ -3,6 +3,7 @@ from models import Task, Comment, TaskType, Status
 
 import datetime
 
+DATE_FORMAT = '%Y-%m-%d'
 
 db = Database('data/tasks.db')
 
@@ -33,8 +34,6 @@ def update_task_from_dict(task_id: int, data: dict):
             'status': data['status_id'],
         }
     )
-    print('update_task_from_dict')
-    print(data)
     if data['comment'] != '':
         create_comment_from_dict(task_id, data['comment'])
 
@@ -46,10 +45,9 @@ def create_comment_from_dict(task_id: int, comment: str):
         )
     )
 
-def update_task_status_from_dict(task_id: int, data: dict):
-    print('***** update_task_status_from_dict *****')
-    print(task_id)
-    print(data)
+def update_task_status_from_dict(
+        task_id: int,
+        data: dict):
     db.update(
         Task,
         task_id,
@@ -60,18 +58,38 @@ def update_task_status_from_dict(task_id: int, data: dict):
 
 def get_tasks():
     date_today = str(datetime.date.today())
-    print(date_today)
-    sql = f'update tasks set status = 3 where date(start_date) < "{date_today}" and status = 1;'
-    print(sql)
+    sql = f'update tasks set status = 3 where date(deadline) < "{date_today}" and status = 1;'
     tasks = db.execute(sql)
-    print(tasks)
     return db.read(Task, order_by=['start_date', 'priority'])
+
+def get_active_tasks():
+    date_today = datetime.datetime.today()
+    all_tasks = get_tasks()
+    active_tasks = []
+    for task in all_tasks:
+        if (
+            datetime.datetime.strptime(task.start_date, DATE_FORMAT) <= date_today and
+            datetime.datetime.strptime(task.deadline, DATE_FORMAT) >= date_today):
+            active_tasks.append(task)
+        if int(task.status) == 3 or int(task.status) == 2:
+            active_tasks.append(task)
+            print('task:', task)
+            print('start date:', datetime.datetime.strptime(task.start_date, DATE_FORMAT))
+            print('today', date_today)
+            print('deadline:', datetime.datetime.strptime(task.deadline, DATE_FORMAT))
+            print('status:', task.status, type(task.status))
+    return active_tasks
+    
 
 def get_task_by_id(id: int) -> Task:
     return db.read(Task, {'id': id})[0]
 
 def delete_task(task: Task):
     db.delete(Task, task.id)
+
+def delete_all_tasks():
+    db.execute('delete from comments')
+    db.execute('delete from tasks')
 
 def get_statuses_dict():
     statuses = db.read(Status)
