@@ -9,7 +9,10 @@ from set_logger import set_logger
 import controller
 from models import Task
 
+import datetime
+
 logger = set_logger(__name__)
+DATE_FORMAT = '%Y-%m-%d'
 
 
 class MainScreen(Screen):
@@ -302,6 +305,7 @@ def create_option_list_object(status_options_list: list):
     return option_list_object
 
 def create_task_screen(task: Task=None):
+    date_today = datetime.date.strftime(datetime.date.today(), DATE_FORMAT)
     status_options_list = controller.get_status_options_list(task=task)
     option_list_object = create_option_list_object(
         status_options_list
@@ -346,7 +350,7 @@ def create_task_screen(task: Task=None):
             title='Start date',
             widget=MaskedInput(
                 id='start_date',
-                value=task.start_date if task else '',
+                value=task.start_date if task else date_today,
                 template=masks['date'],
                 placeholder='YYYY-MM-DD',
                 classes='input-with-border-input',
@@ -356,7 +360,7 @@ def create_task_screen(task: Task=None):
             title='Deadline',
             widget=MaskedInput(
                 id='deadline',
-                value=task.deadline if task else '',
+                value=task.deadline if task else date_today,
                 template=masks['date'],
                 placeholder='YYYY-MM-DD',
                 classes='input-with-border-input',
