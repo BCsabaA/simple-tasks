@@ -1,6 +1,7 @@
 from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
+from textual import on
 
 import controller
 
@@ -62,9 +63,10 @@ class DoubleLabel(Horizontal):
         yield self.widget2
 
 class ObjectCard(ListItem):
-    def __init__(self, instance: object, collapsed: bool=True):
+    def __init__(self, instance: object, index:int, collapsed: bool=True):
         self.widgets = []
         self.collapsed = collapsed
+        self.index = index
         for param in instance.__dict__:
             param_value = str(instance.__dict__[param])
             if param == 'name':
@@ -92,10 +94,6 @@ class ObjectCard(ListItem):
                 
             elif param_value and instance.__dict__[param] != None:
                 self.widgets.append(
-                    # Label(
-                    #     f'{param}: {param_value}',
-                    #     classes='card-label',
-                    # )
                     DoubleLabel(
                         Label(
                             f'{param}:',
@@ -117,8 +115,9 @@ class ObjectCard(ListItem):
 
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
-        object_card = Collapsible(
-            *self.widgets,
+        object_card = CustomCollapsible(
+            self.widgets,
+            self.index,
             title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})',
             collapsed=self.collapsed
         )
@@ -144,8 +143,8 @@ class ObjectCard(ListItem):
 class ObjectCardsGroup(ListView):
     def __init__(self, objects: list[object]):
         self.widgets = []
-        for instance in objects:
-            self.widgets.append(ObjectCard(instance))
+        for index, instance in enumerate(objects):
+            self.widgets.append(ObjectCard(instance=instance, index=index))
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -154,8 +153,7 @@ class ObjectCardsGroup(ListView):
 
     def on_list_view_selected(self, item):
         item.item.query_one(Collapsible).collapsed = not item.item.query_one(Collapsible).collapsed
-
-
+        item.item.highlighted = True
 
 
 class ObjectRadioSet(RadioSet):
@@ -198,3 +196,19 @@ class CustomSelectionList(SelectionList[int]):
         else:
             self.deselect_all()
             
+class CustomCollapsible(Collapsible):
+    def __init__(self, widgets, index, title, collapsed):
+        super().__init__(*widgets)
+        self.title=title
+        self.index = index
+        self.collapsed=collapsed
+
+    @on(Collapsible.Toggled)
+    def print_toggled(self, item):
+        #item.collapsible.parent.highlighted = True
+        #item.collapsible.parent.selected = True
+        item.collapsible.parent.parent.index = self.index
+        #self.parent.parent.Selected.item = self.parent
+        #self.parent.parent.highlighted = True
+        #self.parent.parent.on_list_view_selected(self.parent)
+        self.parent.parent.focus()

@@ -137,6 +137,7 @@ class MainScreen(Screen):
 
     async def action_filter_tasks(self):
         async def check_inputs(inputs: dict[str]) -> None:
+            print('in action_filter_tasks:')
             self.tasks = controller.get_tasks()
             self.status_options_list = controller.get_status_options_list(inputs['status-filter-list'])
             self.status_id_filter_list = inputs['status-filter-list']
@@ -166,12 +167,15 @@ class MainScreen(Screen):
             focus_listview.index = select_index
 
     async def fill_object_cards_group(self, task_list: list[Task]):
+        print('fill_object_cards_group:')
+        print(task_list)
         object_cards_group = self.query_one(ObjectCardsGroup)
         object_cards_group.clear()
         if task_list == []:
             task_list = controller.get_active_tasks()
-        for task in task_list:
-                object_cards_group.append(ObjectCard(task))
+        for index, task in enumerate(task_list):
+            print(task)
+            object_cards_group.append(ObjectCard(instance=task, index=index))
 
     def action_modify_task(self):
         index = self.query_one(ObjectCardsGroup).index

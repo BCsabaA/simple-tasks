@@ -61,7 +61,10 @@ ListItem {
 }
 
 Collapsible {
-    padding: 0;
+    padding-bottom: 1;
+}
+
+CollapsibleTitle {
 }
 
 .card-label {
@@ -71,6 +74,10 @@ Collapsible {
 
 .card-not-started {
     background: #e6b800
+}
+
+.card-not-started > * , .card-blocked > *{
+    color: black;
 }
 
 .card-started {
@@ -85,7 +92,7 @@ Collapsible {
     background: #269900;
 }
 .card-blocked {
-    background: #e6e600;
+    background: lightgray;
     color: black;
 }
 

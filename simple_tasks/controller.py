@@ -63,21 +63,16 @@ def get_tasks():
     return db.read(Task, order_by=['start_date', 'priority'])
 
 def get_active_tasks():
-    date_today = datetime.datetime.today()
+    date_today = datetime.date.today()
     all_tasks = get_tasks()
     active_tasks = []
     for task in all_tasks:
         if (
-            datetime.datetime.strptime(task.start_date, DATE_FORMAT) <= date_today and
-            datetime.datetime.strptime(task.deadline, DATE_FORMAT) >= date_today):
+            datetime.date.fromisoformat(task.start_date) <= date_today and
+            datetime.date.fromisoformat(task.deadline) >= date_today):
             active_tasks.append(task)
-        if int(task.status) == 3 or int(task.status) == 2:
+        elif int(task.status) == 3 or int(task.status) == 2:
             active_tasks.append(task)
-            print('task:', task)
-            print('start date:', datetime.datetime.strptime(task.start_date, DATE_FORMAT))
-            print('today', date_today)
-            print('deadline:', datetime.datetime.strptime(task.deadline, DATE_FORMAT))
-            print('status:', task.status, type(task.status))
     return active_tasks
     
 
