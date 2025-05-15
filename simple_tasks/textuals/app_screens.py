@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collap
 from textual.widgets.option_list import Option
 
 from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen, InfoScreen
-from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList
+from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList, CheckList
 from set_logger import set_logger
 import controller
 from models import Task
@@ -21,6 +21,7 @@ class MainScreen(Screen):
         ("f", "filter_tasks", "Filter"),
         ("a", "add_task", "Add task"),
         ("c", "add_comment", "Add comment"),
+        ("t", "modify_todos", "Modify todos"),
         ("m", "modify_task", "Modify task"),
         ("d", "delete_task", "Delete task"),
         ("ctrl+d", "delete_all_tasks", "Delete all tasks"),
@@ -82,12 +83,33 @@ class MainScreen(Screen):
             self.tasks = controller.get_tasks()
             self.filter_tasks_list_by_status_id()
             self.query_one(ObjectCardsGroup).pop(index)
-            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task, collapsed=collapsed_state)])
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(task, index=index, collapsed=collapsed_state)])
             self.notify(f'Comment added to task #{task.id} {task.name}', severity='information', timeout=5)
             await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
             create_add_comment_screen(),
+            check_inputs
+        )
+
+    def action_modify_todos(self):
+        index = self.query_one(ObjectCardsGroup).index
+        collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
+        selected_task = self.query_one(ObjectCardsGroup).highlighted_child
+        task = controller.get_task_by_id(selected_task.task_id)
+
+        async def check_inputs(inputs: dict[str]) -> None:
+            #controller.update_task_todos_from_dict(task.id, inputs)
+            updated_task = controller.get_task_by_id(task.id)
+            self.tasks = controller.get_tasks()
+            self.filter_tasks_list_by_status_id()
+            self.query_one(ObjectCardsGroup).pop(index)
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
+            self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
+            await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
+
+        self.app.push_screen(
+            create_todos_screen(task=task),
             check_inputs
         )
 
@@ -259,6 +281,18 @@ def create_add_comment_screen():
             ),
         ),
     ])
+
+def create_todos_screen(task: Task) -> FormScreen:
+    todos = controller.get_task_todos(task.id)
+    return FormScreen([
+        InputWithBorder(
+            title=f'Todos for #{task.id} {task.name}',
+            widget=CheckList(
+                items=todos,
+                classes='input-with-border-input'
+            ),
+        )]
+    )
     
 masks = {
         #'date': '[2][0]99-B9-[0123]9',

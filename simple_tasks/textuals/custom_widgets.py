@@ -106,14 +106,22 @@ class ObjectCard(ListItem):
                         classes='card-label',
                     )
                 )
+
         self.comments = controller.get_task_comments(self.task_id)
         if self.comments not in [None, []]:
             self.widgets.append(Label('Comments:', classes='card-label'))
             for comment in self.comments:
                 self.widgets.append(TextArea(comment.text, classes='card-comment'))
+
         self.todos = controller.get_task_todos(self.task_id)
         if self.todos not in [None, []]:
-            pass
+            self.widgets.append(Label('Todos:', classes='card-label'))
+            self.widgets.append(CheckList(
+                        items=self.todos,
+                        classes='input-with-border-checklist',
+                        disabled=True
+                    )
+            )
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -217,15 +225,35 @@ class CustomCollapsible(Collapsible):
         self.parent.parent.focus()
 
 class CheckList(Vertical):
-    def __init__(self, id:int, items:dict, classes=str) -> None:
-        super.__init__()
-        self.id=id
+    BINDINGS = [
+        ('a', 'add_todo', 'Add todo'),
+        ('m', 'modify_todo', 'Modify todo'),
+        ('d', 'delete_todo', 'Delete todo'),
+    ]
+
+    def __init__(self, items:list, classes:str='', disabled=False) -> None:
+        super().__init__()
         self.items=items
         self.classes=classes
+        self.disabled=disabled
 
     def compose(self) -> ComposeResult:
-        for item in self.items:
-            yield Checkbox(
-                label=item.description,
-                value=item.done
-            )
+        if self.items in [None, []]:
+            yield Checkbox(label='No todos', disabled=self.disabled)
+        else:
+            for item in self.items:
+                yield Checkbox(
+                    label=item.description,
+                    value=item.done,
+                    disabled=self.disabled
+                )
+
+    def action_add_todo(self):
+        print('add todo')
+
+    def action_modify_todo(self):
+        print('modify todo')
+        print(self.)
+
+    def action_delete_todo(self):
+        print('delete todo')

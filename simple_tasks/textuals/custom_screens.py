@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer, Footer, Header
 from textual.containers import Vertical, Grid
-from textuals.custom_widgets import InputWithBorder, CustomSelectionList
+from textuals.custom_widgets import InputWithBorder, CustomSelectionList, CheckList
 
 from set_logger import set_logger
 
@@ -108,8 +108,10 @@ class FormScreen(ModalScreen[dict]):
             self,
             widgets: tuple,
             inputs: tuple[dict] = ({'input':'text'}, ),
+            extra_bindings: list[tuple] = [],
             ):
         super().__init__()
+        FormScreen.BINDINGS.append(extra_bindings)
         self.inputs = inputs
         self.widgets = widgets
 
@@ -132,15 +134,22 @@ class FormScreen(ModalScreen[dict]):
         for i, widget in enumerate(widgets):
             if type(widget) == InputWithBorder:
                 input_field = widget.query_one('.input-with-border-input')
-                input_dict.update(
-                    {input_field.id: input_field.text
-                     if type(input_field)==TextArea 
-                     else input_field.selected
-                     if type(input_field)==CustomSelectionList
-                     else input_field.get_option_at_index(input_field.highlighted).id
-                     if type(input_field)==OptionList
-                     else input_field.value}
-                )
+                if type(input_field) == CheckList:
+                    for child in input_field.children:
+                        input_dict.update(
+                            {child.label: child.value}
+                        )
+                else:
+                    input_dict.update(
+                        {input_field.id: input_field.text
+                        if type(input_field)==TextArea 
+                        else input_field.selected
+                        if type(input_field)==CustomSelectionList
+                        else input_field.get_option_at_index(input_field.highlighted).id
+                        if type(input_field)==OptionList
+                        else input_field.value}
+                    )
+        print(input_dict)
         self.dismiss(input_dict)
 
 

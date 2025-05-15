@@ -23,7 +23,7 @@
 - [x] main screen have to show active (started and date relevant ones) and delayed tasks instead of all not started ones
 - [x] shortcut for delete all tasks
 - [ ] new screen: dashboard
-- [ ] every task can contain subtasks, and subtasks can contain other subtasks
+- [ ] add toodos for tasks
 - [ ] user settings for initial status filter
 - [ ] new task parameter: duration
 - [ ] new screen: calendar view

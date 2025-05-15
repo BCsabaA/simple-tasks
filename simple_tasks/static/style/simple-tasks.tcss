@@ -157,3 +157,17 @@ MardownViewer>Grid {
     width: 100%;
 }
 
+CheckList {
+    height: auto;
+    width: 100%;
+    padding: 0;
+    margin: 1 1;
+}
+
+Checkbox {
+    width: 100%;
+    border: hidden black;
+    padding: 0;
+    margin: 0;
+}
+
