@@ -253,7 +253,6 @@ class CheckList(Vertical):
 
     def action_modify_todo(self):
         print('modify todo')
-        print(self.)
 
     def action_delete_todo(self):
         print('delete todo')
