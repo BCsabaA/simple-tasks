@@ -1,6 +1,6 @@
-from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList
+from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList, Checkbox
 from textual.app import ComposeResult
-from textual.containers import Vertical, Horizontal
+from textual.containers import Vertical, Horizontal, VerticalScroll
 from textual import on
 
 import controller
@@ -111,6 +111,9 @@ class ObjectCard(ListItem):
             self.widgets.append(Label('Comments:', classes='card-label'))
             for comment in self.comments:
                 self.widgets.append(TextArea(comment.text, classes='card-comment'))
+        self.todos = controller.get_task_todos(self.task_id)
+        if self.todos not in [None, []]:
+            pass
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -212,3 +215,17 @@ class CustomCollapsible(Collapsible):
         #self.parent.parent.highlighted = True
         #self.parent.parent.on_list_view_selected(self.parent)
         self.parent.parent.focus()
+
+class CheckList(Vertical):
+    def __init__(self, id:int, items:dict, classes=str) -> None:
+        super.__init__()
+        self.id=id
+        self.items=items
+        self.classes=classes
+
+    def compose(self) -> ComposeResult:
+        for item in self.items:
+            yield Checkbox(
+                label=item.description,
+                value=item.done
+            )

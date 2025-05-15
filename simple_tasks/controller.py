@@ -1,5 +1,5 @@
 from simple_db_handler import Database, Table, Field
-from models import Task, Comment, TaskType, Status
+from models import Task, Comment, TaskType, Status, Todo
 
 import datetime
 
@@ -120,8 +120,20 @@ def get_status_ids():
         status_ids.append(status.id)
     return status_ids
 
-def get_task_comments(id: int) -> list[str]:
+def get_task_comments(id: int) -> list[Comment]:
     return db.read(Comment, filters={'task_id': id})
+
+def get_task_todos(id:int) -> list[Todo]:
+    return db.read(Todo, filters={'task_id': id})
+
+def main():
+    todo1 = Todo(task_id=44, description='todo1')
+    todo2 = Todo(task_id=44, description='todo2', done=True)
+    db.insert_many([todo1, todo2])
+
+
+if __name__=='__main__':
+    main()
     
 
 

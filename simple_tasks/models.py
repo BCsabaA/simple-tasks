@@ -74,3 +74,20 @@ class Comment(Table):
 
     def __str__(self):
         return f'Comment(id={self.id}, task id={self.task_id}, text={self.text})'
+
+
+class Todo(Table):
+    TABLENAME = 'todos'
+    ID = Field('id', int, primary_key=True, autoincrement=True)
+    TASK_ID = Field('task_id', int, foreign_key_table='tasks', foreign_key_column='id', on_delete= 'CASCADE', on_update='CASCADE')
+    DESCRIPTION = Field('description', str)
+    DONE = Field('done', bool)
+
+    def __init__(self, id=None, task_id=None, description='', done=False):
+        self.id = id
+        self.task_id = task_id
+        self.description = description
+        self.done = done
+
+    def __str__(self):
+        return f'Todo({self.id}, {self.task_id}, {self.description}, {self.done})'
