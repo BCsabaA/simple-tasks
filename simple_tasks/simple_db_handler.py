@@ -119,6 +119,7 @@ class Database():
         Database.DATABASE.commit()
         Database.DATABASE.close()
         LOGGER.info(f'class Database: update(): {obj_class.TABLENAME} {id} updated')
+        print(create_update_query)
 
     def delete(self, obj_class, id=None, filters: dict=None):
         if filters:

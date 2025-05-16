@@ -1,4 +1,5 @@
 from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList, Checkbox, Footer, OptionList
+from textual.widget import Widget
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal, VerticalScroll
 from textual import on
@@ -322,10 +323,25 @@ class CustomCheckBox(Checkbox):
             check_inputs
         )
 
-    def action_toggle_button(self):
-        super().action_toggle_button()
-        print(self.value)
-        controller.modify_todo(self.item_id, done=self.value)
+    # def action_toggle_button(self):
+    #     super().action_toggle_button()
+    #     print('action toggle button')
+    #     print(self.value)
+        
+
+    @on(Checkbox.Changed)
+    def handle_changed(self, item):
+        if self.parent.loaded:
+            print('in changed')
+            print(item)
+            controller.modify_todo(self.item_id, done=self.value)
+        
+    # def action_toggle(self):
+    #     super().action_toggle()
+    #     print('action toggle')
+
+    # def on_checkbox_clicked(self, item):
+    #     print('in clicked', item)
 
     def action_delete_todo(self):
         controller.delete_todo(self.item_id)
@@ -343,6 +359,7 @@ class CheckList(Vertical):
         self.classes=classes
         self.disabled=disabled
         self.task_id=task_id
+        self.loaded = False
 
     def compose(self) -> ComposeResult:
         if self.items in [None, []]:
@@ -357,6 +374,9 @@ class CheckList(Vertical):
                     item_id=item.id,
                     disabled=self.disabled
                 )
+
+    def on_mount(self):
+        self.loaded = True
 
     def refresh_todos(self):
         #self.children.clear()
