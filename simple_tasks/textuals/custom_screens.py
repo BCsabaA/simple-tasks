@@ -109,17 +109,22 @@ class FormScreen(ModalScreen[dict]):
             widgets: tuple,
             inputs: tuple[dict] = ({'input':'text'}, ),
             extra_bindings: list[tuple] = [],
+            submit_button_display: bool = True
             ):
         super().__init__()
         FormScreen.BINDINGS.append(extra_bindings)
         self.inputs = inputs
         self.widgets = widgets
+        self.submit_button_display = submit_button_display
 
     def compose(self) -> ComposeResult:
-        self.widgets += [Button(
-            'Submit',
-            variant='primary',
-            id='form-screen-submit')]
+        print(self.submit_button_display)
+        print(self.widgets)
+        if self.submit_button_display:
+            self.widgets += [Button(
+                'Submit',
+                variant='primary',
+                id='form-screen-submit')]
         yield Vertical(
             *self.widgets,
             id='form-screen')

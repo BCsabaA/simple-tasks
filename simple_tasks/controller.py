@@ -56,6 +56,25 @@ def create_todo(task_id: int, description: str):
 def delete_todo(todo_id):
     db.delete(Todo, todo_id)
 
+def modify_todo(todo_id: int, description: str = None, done: bool = None):
+    print('todo_id', todo_id, 'description', description, 'done', done)
+    if description:
+        db.update(
+            Todo,
+            todo_id,
+            {
+                'description': description,
+            }
+        )
+    if done is not None:
+        db.update(
+            Todo,
+            todo_id,
+            {
+                'done': done,
+            }
+        )
+
 def update_task_status_from_dict(
         task_id: int,
         data: dict):

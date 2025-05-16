@@ -41,9 +41,17 @@ Button {
     content-align: center middle;
 }
 
-InputWithBorder Input {
-    padding: 0 1;
+InputWithBorder {
+    height: auto;
+    padding: 0;
     margin: 0;
+}
+
+InputWithBorder Input {
+    padding: 0;
+    margin: 0;
+    height: auto;
+    border: hidden black;
 }
 
 #form-screen-submit {

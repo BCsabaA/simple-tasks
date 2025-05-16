@@ -17,17 +17,22 @@ class FormScreen(ModalScreen[dict]):
             widgets: tuple,
             inputs: tuple[dict] = ({'input':'text'}, ),
             extra_bindings: list[tuple] = [],
+            submit_button_display: bool = True
             ):
         super().__init__()
         FormScreen.BINDINGS.append(extra_bindings)
         self.inputs = inputs
         self.widgets = widgets
+        self.submit_button_display = submit_button_display
 
     def compose(self) -> ComposeResult:
-        self.widgets += [Button(
-            'Submit',
-            variant='primary',
-            id='form-screen-submit')]
+        print(self.submit_button_display)
+        print(self.widgets)
+        if self.submit_button_display:
+            self.widgets += [Button(
+                'Submit',
+                variant='primary',
+                id='form-screen-submit',)]
         yield Vertical(
             *self.widgets,
             id='form-screen')
@@ -295,11 +300,34 @@ class CustomCheckBox(Checkbox):
         self.item_id = item_id
 
     def action_modify_todo(self):
-        print('modify todo')
+        def check_inputs(inputs: dict[str]) -> None:
+            controller.modify_todo(
+                self.item_id,
+                inputs['description']
+            )
+            self.parent.refresh_todos()
+
+        self.app.push_screen(
+            FormScreen([
+                InputWithBorder(
+                    title='Todo',
+                    widget=Input(
+                        id='description',
+                        type='text',
+                        value=self.label.plain,
+                        classes='input-with-border-input',
+                    ),
+                ),
+            ]),
+            check_inputs
+        )
+
+    def action_toggle_button(self):
+        super().action_toggle_button()
+        print(self.value)
+        controller.modify_todo(self.item_id, done=self.value)
 
     def action_delete_todo(self):
-        print('delete todo')
-        print(self.item_id)
         controller.delete_todo(self.item_id)
         self.parent.refresh_todos()
 
@@ -340,12 +368,12 @@ class CheckList(Vertical):
                 CustomCheckBox(
                     label=todo.description,
                     value=todo.done,
+                    item_id=todo.id
                 )
             )
 
     def action_add_todo(self):
         def check_inputs(inputs: dict[str]) -> None:
-            print(inputs)
             controller.create_todo(
                 self.task_id,
                 inputs['description']

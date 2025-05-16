@@ -293,6 +293,7 @@ def create_todos_screen(task: Task) -> FormScreen:
                 task_id=task.id
             ),
         )],
+        submit_button_display=False
     )
     
 masks = {
