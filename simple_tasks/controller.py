@@ -45,6 +45,17 @@ def create_comment_from_dict(task_id: int, comment: str):
         )
     )
 
+def create_todo(task_id: int, description: str):
+    db.insert(
+        Todo(
+            task_id=task_id,
+            description=description,
+        )
+    )
+
+def delete_todo(todo_id):
+    db.delete(Todo, todo_id)
+
 def update_task_status_from_dict(
         task_id: int,
         data: dict):

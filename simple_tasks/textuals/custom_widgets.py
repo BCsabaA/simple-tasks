@@ -1,9 +1,65 @@
-from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList, Checkbox
+from textual.widgets import Button, Input, MaskedInput, Static, Collapsible, Label, ListView, ListItem, TextArea, RadioSet, RadioButton, SelectionList, Checkbox, Footer, OptionList
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal, VerticalScroll
 from textual import on
+from textual.screen import ModalScreen
 
 import controller
+
+
+class FormScreen(ModalScreen[dict]):
+    BINDINGS = [
+        ("escape", "close_screen", "Quit"),
+    ]
+    
+    def __init__(
+            self,
+            widgets: tuple,
+            inputs: tuple[dict] = ({'input':'text'}, ),
+            extra_bindings: list[tuple] = [],
+            ):
+        super().__init__()
+        FormScreen.BINDINGS.append(extra_bindings)
+        self.inputs = inputs
+        self.widgets = widgets
+
+    def compose(self) -> ComposeResult:
+        self.widgets += [Button(
+            'Submit',
+            variant='primary',
+            id='form-screen-submit')]
+        yield Vertical(
+            *self.widgets,
+            id='form-screen')
+        yield Footer()
+
+    def action_close_screen(self):
+        self.app.pop_screen()
+
+    def on_button_pressed(self, event: Button.Pressed):
+        input_dict = {}
+        widgets = self.query_one('#form-screen').children
+        for i, widget in enumerate(widgets):
+            if type(widget) == InputWithBorder:
+                input_field = widget.query_one('.input-with-border-input')
+                if type(input_field) == CheckList:
+                    for child in input_field.children:
+                        input_dict.update(
+                            {child.label: child.value}
+                        )
+                else:
+                    input_dict.update(
+                        {input_field.id: input_field.text
+                        if type(input_field)==TextArea 
+                        else input_field.selected
+                        if type(input_field)==CustomSelectionList
+                        else input_field.get_option_at_index(input_field.highlighted).id
+                        if type(input_field)==OptionList
+                        else input_field.value}
+                    )
+        print(input_dict)
+        self.dismiss(input_dict)
+
 
 class InputWithBorder(Static):
     """A Static that acts as a titled border
@@ -224,35 +280,89 @@ class CustomCollapsible(Collapsible):
         #self.parent.parent.on_list_view_selected(self.parent)
         self.parent.parent.focus()
 
-class CheckList(Vertical):
+
+class CustomCheckBox(Checkbox):
     BINDINGS = [
-        ('a', 'add_todo', 'Add todo'),
-        ('m', 'modify_todo', 'Modify todo'),
+        ('m', 'modify_todo', 'Modify description'),
         ('d', 'delete_todo', 'Delete todo'),
     ]
 
-    def __init__(self, items:list, classes:str='', disabled=False) -> None:
+    def __init__(self, label: str, value: bool, disabled:bool=False, item_id: int = None):
         super().__init__()
-        self.items=items
-        self.classes=classes
-        self.disabled=disabled
-
-    def compose(self) -> ComposeResult:
-        if self.items in [None, []]:
-            yield Checkbox(label='No todos', disabled=self.disabled)
-        else:
-            for item in self.items:
-                yield Checkbox(
-                    label=item.description,
-                    value=item.done,
-                    disabled=self.disabled
-                )
-
-    def action_add_todo(self):
-        print('add todo')
+        self.label = label
+        self.value = value
+        self.disabled = disabled
+        self.item_id = item_id
 
     def action_modify_todo(self):
         print('modify todo')
 
     def action_delete_todo(self):
         print('delete todo')
+        print(self.item_id)
+        controller.delete_todo(self.item_id)
+        self.parent.refresh_todos()
+
+
+class CheckList(Vertical):
+    BINDINGS = [
+        ('a', 'add_todo', 'Add todo'),
+    ]
+
+    def __init__(self, items:list, classes:str='', disabled:bool=False, task_id: int=None) -> None:
+        super().__init__()
+        self.items=items
+        self.classes=classes
+        self.disabled=disabled
+        self.task_id=task_id
+
+    def compose(self) -> ComposeResult:
+        if self.items in [None, []]:
+            yield Checkbox(label='No todos', disabled=self.disabled)
+           #yield TextArea('no todos here', disabled=True)
+            
+        else:
+            for item in self.items:
+                yield CustomCheckBox(
+                    label=item.description,
+                    value=item.done,
+                    item_id=item.id,
+                    disabled=self.disabled
+                )
+
+    def refresh_todos(self):
+        #self.children.clear()
+        for widget in self.children:
+            widget.remove()
+        todos = controller.get_task_todos(self.task_id)
+        for todo in todos:
+            self.mount(
+                CustomCheckBox(
+                    label=todo.description,
+                    value=todo.done,
+                )
+            )
+
+    def action_add_todo(self):
+        def check_inputs(inputs: dict[str]) -> None:
+            print(inputs)
+            controller.create_todo(
+                self.task_id,
+                inputs['description']
+            )
+            self.refresh_todos()
+
+        self.app.push_screen(
+            FormScreen([
+                InputWithBorder(
+                    title='Todo',
+                    widget=Input(
+                        id='description',
+                        type='text',
+                        classes='input-with-border-input',
+                    ),
+                ),
+            ]),
+            check_inputs
+        )
+

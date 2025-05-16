@@ -289,9 +289,10 @@ def create_todos_screen(task: Task) -> FormScreen:
             title=f'Todos for #{task.id} {task.name}',
             widget=CheckList(
                 items=todos,
-                classes='input-with-border-input'
+                classes='input-with-border-input',
+                task_id=task.id
             ),
-        )]
+        )],
     )
     
 masks = {
