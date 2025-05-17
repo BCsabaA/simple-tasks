@@ -323,25 +323,12 @@ class CustomCheckBox(Checkbox):
             check_inputs
         )
 
-    # def action_toggle_button(self):
-    #     super().action_toggle_button()
-    #     print('action toggle button')
-    #     print(self.value)
-        
-
     @on(Checkbox.Changed)
     def handle_changed(self, item):
         if self.parent.loaded:
             print('in changed')
             print(item)
             controller.modify_todo(self.item_id, done=self.value)
-        
-    # def action_toggle(self):
-    #     super().action_toggle()
-    #     print('action toggle')
-
-    # def on_checkbox_clicked(self, item):
-    #     print('in clicked', item)
 
     def action_delete_todo(self):
         controller.delete_todo(self.item_id)

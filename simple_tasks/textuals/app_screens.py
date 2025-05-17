@@ -3,8 +3,8 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView
 from textual.widgets.option_list import Option
 
-from textuals.custom_screens import QuitScreen, FormScreen, QuestionScreen, InfoScreen
-from textuals.custom_widgets import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList, CheckList
+from textuals.custom_tools import QuitScreen, FormScreen, QuestionScreen, InfoScreen
+from textuals.custom_tools import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList, CheckList
 from set_logger import set_logger
 import controller
 from models import Task
@@ -92,26 +92,34 @@ class MainScreen(Screen):
             check_inputs
         )
 
-    def action_modify_todos(self):
+    async def action_modify_todos(self):
         index = self.query_one(ObjectCardsGroup).index
         collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
-        async def check_inputs(inputs: dict[str]) -> None:
+        def handle_quit() -> None:
             #controller.update_task_todos_from_dict(task.id, inputs)
+            print('called back')
             updated_task = controller.get_task_by_id(task.id)
+            updated_todos = controller.get_task_todos(task.id)
             self.tasks = controller.get_tasks()
             self.filter_tasks_list_by_status_id()
             self.query_one(ObjectCardsGroup).pop(index)
             self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
             self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
-            await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
+            self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
-            create_todos_screen(task=task),
-            check_inputs
+            create_todos_screen(task=task, callback_on_quit=handle_quit)
         )
+        # updated_task = controller.get_task_by_id(task.id)
+        # self.tasks = controller.get_tasks()
+        # self.filter_tasks_list_by_status_id()
+        # self.query_one(ObjectCardsGroup).pop(index)
+        # self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
+        # self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
+        # self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
     def action_delete_task(self):
         index = self.query_one(ObjectCardsGroup).index
@@ -213,7 +221,7 @@ class MainScreen(Screen):
             self.filter_tasks_list_by_status_id()
             object_cards_group = self.query_one(ObjectCardsGroup)
             object_cards_group.pop(index)
-            object_cards_group.insert(index, [ObjectCard(updated_task)])
+            object_cards_group.insert(index, [ObjectCard(updated_task, index)])
             
             self.notify(f'Task #{updated_task.id} {updated_task.name} modified', severity='information', timeout=5)
                 
@@ -234,7 +242,12 @@ class MainScreen(Screen):
             task_list = self.query_one(ObjectCardsGroup)
             new_task = controller.get_task_by_id(id)
             self.tasks = controller.get_tasks()
-            task_list.append(ObjectCard(new_task))
+            task_list.append(
+                ObjectCard(
+                    new_task,
+                    task_list.children.count
+                )
+            )
 
             self.notify(f'Task #{new_task.id} {new_task.name} added', severity='information', timeout=5)
 
@@ -282,7 +295,7 @@ def create_add_comment_screen():
         ),
     ])
 
-def create_todos_screen(task: Task) -> FormScreen:
+def create_todos_screen(task: Task, callback_on_quit) -> FormScreen:
     todos = controller.get_task_todos(task.id)
     return FormScreen([
         InputWithBorder(
@@ -293,7 +306,8 @@ def create_todos_screen(task: Task) -> FormScreen:
                 task_id=task.id
             ),
         )],
-        submit_button_display=False
+        submit_button_display=False,
+        callback_on_quit=callback_on_quit
     )
     
 masks = {

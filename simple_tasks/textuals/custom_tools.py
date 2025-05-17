@@ -4,7 +4,7 @@ from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInp
 from textual.containers import Vertical, Grid, Horizontal
 from textuals.custom_widgets import InputWithBorder, CustomSelectionList, CheckList
 
-
+from textual.events import Click
 from textual import on
 
 import controller
@@ -103,64 +103,6 @@ class QuestionScreen(ModalScreen[str]):
         label.styles.text_align = "center"
         label.styles.height = "auto"
 
-        
-class FormScreen(ModalScreen[dict]):
-    BINDINGS = [
-        ("escape", "close_screen", "Quit"),
-    ]
-    
-    def __init__(
-            self,
-            widgets: tuple,
-            inputs: tuple[dict] = ({'input':'text'}, ),
-            extra_bindings: list[tuple] = [],
-            submit_button_display: bool = True
-            ):
-        super().__init__()
-        FormScreen.BINDINGS.append(extra_bindings)
-        self.inputs = inputs
-        self.widgets = widgets
-        self.submit_button_display = submit_button_display
-
-    def compose(self) -> ComposeResult:
-        print(self.submit_button_display)
-        print(self.widgets)
-        if self.submit_button_display:
-            self.widgets += [Button(
-                'Submit',
-                variant='primary',
-                id='form-screen-submit')]
-        yield Vertical(
-            *self.widgets,
-            id='form-screen')
-        yield Footer()
-
-    def action_close_screen(self):
-        self.app.pop_screen()
-
-    def on_button_pressed(self, event: Button.Pressed):
-        input_dict = {}
-        widgets = self.query_one('#form-screen').children
-        for i, widget in enumerate(widgets):
-            if type(widget) == InputWithBorder:
-                input_field = widget.query_one('.input-with-border-input')
-                if type(input_field) == CheckList:
-                    for child in input_field.children:
-                        input_dict.update(
-                            {child.label: child.value}
-                        )
-                else:
-                    input_dict.update(
-                        {input_field.id: input_field.text
-                        if type(input_field)==TextArea 
-                        else input_field.selected
-                        if type(input_field)==CustomSelectionList
-                        else input_field.get_option_at_index(input_field.highlighted).id
-                        if type(input_field)==OptionList
-                        else input_field.value}
-                    )
-        print(input_dict)
-        self.dismiss(input_dict)
 
 class FormScreen(ModalScreen[dict]):
     BINDINGS = [
@@ -172,13 +114,15 @@ class FormScreen(ModalScreen[dict]):
             widgets: tuple,
             inputs: tuple[dict] = ({'input':'text'}, ),
             extra_bindings: list[tuple] = [],
-            submit_button_display: bool = True
+            submit_button_display: bool = True,
+            callback_on_quit=None
             ):
         super().__init__()
         FormScreen.BINDINGS.append(extra_bindings)
         self.inputs = inputs
         self.widgets = widgets
         self.submit_button_display = submit_button_display
+        self.callback_on_quit = callback_on_quit
 
     def compose(self) -> ComposeResult:
         print(self.submit_button_display)
@@ -195,6 +139,8 @@ class FormScreen(ModalScreen[dict]):
 
     def action_close_screen(self):
         self.app.pop_screen()
+        if not self.callback_on_quit == None:
+            self.callback_on_quit()
 
     def on_button_pressed(self, event: Button.Pressed):
         input_dict = {}
@@ -330,12 +276,13 @@ class ObjectCard(ListItem):
                 self.widgets.append(TextArea(comment.text, classes='card-comment'))
 
         self.todos = controller.get_task_todos(self.task_id)
+        print(self.todos)
         if self.todos not in [None, []]:
             self.widgets.append(Label('Todos:', classes='card-label'))
             self.widgets.append(CheckList(
                         items=self.todos,
                         classes='input-with-border-checklist',
-                        disabled=True
+                        disabled=False
                     )
             )
         super().__init__()
@@ -429,17 +376,18 @@ class CustomCollapsible(Collapsible):
         self.title=title
         self.index = index
         self.collapsed=collapsed
+        self.to_toggle = True
 
     @on(Collapsible.Toggled)
     def print_toggled(self, item):
         #item.collapsible.parent.highlighted = True
         #item.collapsible.parent.selected = True
+        print(item.__dict__)
         item.collapsible.parent.parent.index = self.index
         #self.parent.parent.Selected.item = self.parent
         #self.parent.parent.highlighted = True
         #self.parent.parent.on_list_view_selected(self.parent)
         self.parent.parent.focus()
-
 
 class CustomCheckBox(Checkbox):
     BINDINGS = [
@@ -477,10 +425,20 @@ class CustomCheckBox(Checkbox):
             check_inputs
         )
 
-    def action_toggle_button(self):
-        super().action_toggle_button()
-        print(self.value)
-        controller.modify_todo(self.item_id, done=self.value)
+    def on_click(self, event: Click):
+        event.stop()
+
+    @on(Checkbox.Changed)
+    def handle_changed(self, item):
+        print('changed parent loaded',self.parent.loaded)
+        if self.parent.loaded:
+            print('in changed')
+            print(item)
+            print(self.parent)
+            print(self.parent.parent)
+            print(self.parent.parent.parent)
+            self.parent.parent.parent.to_toggle = False
+            controller.modify_todo(self.item_id, done=self.value)
 
     def action_delete_todo(self):
         controller.delete_todo(self.item_id)
@@ -498,6 +456,7 @@ class CheckList(Vertical):
         self.classes=classes
         self.disabled=disabled
         self.task_id=task_id
+        self.loaded = False
 
     def compose(self) -> ComposeResult:
         if self.items in [None, []]:
@@ -512,6 +471,9 @@ class CheckList(Vertical):
                     item_id=item.id,
                     disabled=self.disabled
                 )
+
+    def on_mount(self):
+        self.loaded = True
 
     def refresh_todos(self):
         #self.children.clear()
@@ -548,7 +510,5 @@ class CheckList(Vertical):
             ]),
             check_inputs
         )
-
-
 
 
