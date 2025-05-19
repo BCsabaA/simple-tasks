@@ -57,7 +57,7 @@ def delete_todo(todo_id):
     db.delete(Todo, todo_id)
 
 def modify_todo(todo_id: int, description: str = None, done: bool = None):
-    print('todo_id', todo_id, 'description', description, 'done', done)
+    print('start controller modify_todo', todo_id, description, done)
     if description:
         db.update(
             Todo,

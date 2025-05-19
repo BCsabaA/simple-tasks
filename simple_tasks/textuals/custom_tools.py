@@ -7,6 +7,10 @@ from textuals.custom_widgets import InputWithBorder, CustomSelectionList, CheckL
 from textual.events import Click
 from textual import on
 
+from collections import Counter
+
+from models import Todo
+
 import controller
 
 from set_logger import set_logger
@@ -61,7 +65,7 @@ class InfoScreen(ModalScreen):
 
     def action_close_info_screen(self):
         self.app.pop_screen()
-            
+
 
 class QuestionScreen(ModalScreen[str]):
     def __init__(self,
@@ -118,15 +122,15 @@ class FormScreen(ModalScreen[dict]):
             callback_on_quit=None
             ):
         super().__init__()
+        print('start FormScreen __init__')
         FormScreen.BINDINGS.append(extra_bindings)
         self.inputs = inputs
         self.widgets = widgets
         self.submit_button_display = submit_button_display
         self.callback_on_quit = callback_on_quit
+        print('FormScreen:', self)
 
     def compose(self) -> ComposeResult:
-        print(self.submit_button_display)
-        print(self.widgets)
         if self.submit_button_display:
             self.widgets += [Button(
                 'Submit',
@@ -137,10 +141,12 @@ class FormScreen(ModalScreen[dict]):
             id='form-screen')
         yield Footer()
 
-    def action_close_screen(self):
+    async def action_close_screen(self):
+        print('start FormScreen action_close_screen')
         self.app.pop_screen()
         if not self.callback_on_quit == None:
-            self.callback_on_quit()
+            print('in if True')
+            await self.callback_on_quit()
 
     def on_button_pressed(self, event: Button.Pressed):
         input_dict = {}
@@ -213,6 +219,7 @@ class InputWithBorder(Static):
     def value(self) -> str:
         return self.input.value
 
+
 class DoubleLabel(Horizontal):
     def __init__(self, widget1, widget2, classes='card-label'):
         super().__init__()
@@ -223,6 +230,7 @@ class DoubleLabel(Horizontal):
     def compose(self) -> ComposeResult:
         yield self.widget1
         yield self.widget2
+
 
 class ObjectCard(ListItem):
     def __init__(self, instance: object, index:int, collapsed: bool=True):
@@ -276,23 +284,30 @@ class ObjectCard(ListItem):
                 self.widgets.append(TextArea(comment.text, classes='card-comment'))
 
         self.todos = controller.get_task_todos(self.task_id)
-        print(self.todos)
         if self.todos not in [None, []]:
             self.widgets.append(Label('Todos:', classes='card-label'))
             self.widgets.append(CheckList(
                         items=self.todos,
                         classes='input-with-border-checklist',
-                        disabled=False
+                        disabled=True
                     )
             )
+            self.todo_count = len(self.todos)
+            self.todo_done_count = Counter(todo.done for todo in self.todos)[True]
+            print(self.todo_count, self.todo_done_count)
         super().__init__()
 
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
+        title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})'
+        if self.todos not in [None, []]:
+            title += f' {self.todo_count}/{self.todo_done_count} todos'
+        else:
+            title += ' no todos'
         object_card = CustomCollapsible(
             self.widgets,
             self.index,
-            title = f'#{self.task_id} {self.task_name} ({statuses[self.status_id]})',
+            title = title,
             collapsed=self.collapsed
         )
 
@@ -369,7 +384,8 @@ class CustomSelectionList(SelectionList[int]):
                 self.select(i+1)
         else:
             self.deselect_all()
-            
+
+
 class CustomCollapsible(Collapsible):
     def __init__(self, widgets, index, title, collapsed):
         super().__init__(*widgets)
@@ -380,135 +396,151 @@ class CustomCollapsible(Collapsible):
 
     @on(Collapsible.Toggled)
     def print_toggled(self, item):
-        #item.collapsible.parent.highlighted = True
-        #item.collapsible.parent.selected = True
-        print(item.__dict__)
         item.collapsible.parent.parent.index = self.index
-        #self.parent.parent.Selected.item = self.parent
-        #self.parent.parent.highlighted = True
-        #self.parent.parent.on_list_view_selected(self.parent)
         self.parent.parent.focus()
 
-class CustomCheckBox(Checkbox):
-    BINDINGS = [
-        ('m', 'modify_todo', 'Modify description'),
-        ('d', 'delete_todo', 'Delete todo'),
-    ]
 
-    def __init__(self, label: str, value: bool, disabled:bool=False, item_id: int = None):
+class TodoCheckBox(Checkbox):
+    def __init__(self, label: str, value: bool, todo_id: int = None):
         super().__init__()
         self.label = label
         self.value = value
-        self.disabled = disabled
-        self.item_id = item_id
-
-    def action_modify_todo(self):
-        def check_inputs(inputs: dict[str]) -> None:
-            controller.modify_todo(
-                self.item_id,
-                inputs['description']
-            )
-            self.parent.refresh_todos()
-
-        self.app.push_screen(
-            FormScreen([
-                InputWithBorder(
-                    title='Todo',
-                    widget=Input(
-                        id='description',
-                        type='text',
-                        value=self.label.plain,
-                        classes='input-with-border-input',
-                    ),
-                ),
-            ]),
-            check_inputs
-        )
-
-    def on_click(self, event: Click):
-        event.stop()
+        self.todo_id = todo_id
 
     @on(Checkbox.Changed)
     def handle_changed(self, item):
-        print('changed parent loaded',self.parent.loaded)
-        if self.parent.loaded:
-            print('in changed')
-            print(item)
-            print(self.parent)
-            print(self.parent.parent)
-            print(self.parent.parent.parent)
-            self.parent.parent.parent.to_toggle = False
-            controller.modify_todo(self.item_id, done=self.value)
-
-    def action_delete_todo(self):
-        controller.delete_todo(self.item_id)
-        self.parent.refresh_todos()
+        controller.modify_todo(self.todo_id, done=self.value)
 
 
-class CheckList(Vertical):
-    BINDINGS = [
-        ('a', 'add_todo', 'Add todo'),
-    ]
-
-    def __init__(self, items:list, classes:str='', disabled:bool=False, task_id: int=None) -> None:
+class TodoListItem(ListItem):
+    def __init__(self, index: int, todo: Todo):
+        print('in TodoListItem __init__', id, index, Todo)
         super().__init__()
-        self.items=items
-        self.classes=classes
-        self.disabled=disabled
-        self.task_id=task_id
-        self.loaded = False
+        self.todo = todo
+        self.index = index
 
     def compose(self) -> ComposeResult:
-        if self.items in [None, []]:
-            yield Checkbox(label='No todos', disabled=self.disabled)
-           #yield TextArea('no todos here', disabled=True)
-            
-        else:
-            for item in self.items:
-                yield CustomCheckBox(
-                    label=item.description,
-                    value=item.done,
-                    item_id=item.id,
-                    disabled=self.disabled
-                )
+        print('in TodoListItem compose')
+        yield TodoCheckBox(
+            label=self.todo.description,
+            value=self.todo.done,
+            todo_id=self.todo.id
+        )
 
     def on_mount(self):
-        self.loaded = True
+        print('in TodoListItem on_mount')
+    
+    def handle_todo_checklist_change(self, event):
+        print('in TodoCheckList handle_todo_checklist_change', event, event.item)
+        
 
-    def refresh_todos(self):
-        #self.children.clear()
+class TodoCheckList(ListView):
+
+    BINDINGS = [
+        ('a', 'add_todo', 'Add todo'),
+        ('m', 'modify_description', 'Modify description'),
+        ('d', 'delete_todo', 'Delete todo'),
+        
+    ]
+    
+    def __init__(
+            self,
+            id: str,
+            todos: list[Todo],
+            task_id:int,
+            classes: str):
+        super().__init__(id=id)
+        print('in TodoCheckList __init__', id, todos, task_id, classes)
+        self.todos = todos
+        self.task_id = task_id
+
+    def compose(self) -> ComposeResult:
+        print('in TodoCheckList compose')
+        for index, todo in enumerate(self.todos):
+            yield TodoListItem(
+                index=index,
+                todo=todo,
+            )
+            
+    def on_mount(self):
+        print('in TodoCheckList on_mount')
+
+    def rebuild_todos_list(self):
+        print('in TodoCheckList rebuild_todos_list')
         for widget in self.children:
             widget.remove()
-        todos = controller.get_task_todos(self.task_id)
-        for todo in todos:
+        self.todos = controller.get_task_todos(self.task_id)
+        for index, todo in enumerate(self.todos):
             self.mount(
-                CustomCheckBox(
-                    label=todo.description,
-                    value=todo.done,
-                    item_id=todo.id
+                TodoListItem(
+                    index=index,
+                    todo=todo,
                 )
             )
+        self.children[0].highlighted = True
+        self.index = self.children[0].index
+        self.focus()
+        self.refresh()
+
+    def get_description_screen(
+            self,
+            initial_description: str=None):
+        return FormScreen([
+            InputWithBorder(
+                title='Todo',
+                widget=Input(
+                    id='description',
+                    type='text',
+                    value=initial_description if initial_description else '',
+                    classes='input-with-border-input',
+                ),
+            ),
+        ])
 
     def action_add_todo(self):
-        def check_inputs(inputs: dict[str]) -> None:
+        print('in TodoCheckList action_add_todo')
+        def check_inputs(inputs):
+            print('start TodoCheckList check_inputs')
+            print(inputs)
             controller.create_todo(
                 self.task_id,
                 inputs['description']
             )
-            self.refresh_todos()
+            self.rebuild_todos_list()
+            print('end TodoCheckList check_inputs ')
 
         self.app.push_screen(
-            FormScreen([
-                InputWithBorder(
-                    title='Todo',
-                    widget=Input(
-                        id='description',
-                        type='text',
-                        classes='input-with-border-input',
-                    ),
-                ),
-            ]),
+            self.get_description_screen(),
             check_inputs
         )
+
+    def action_modify_description(self):
+        print('in TodoCheckList action_modify_description')
+        print('self.highlighted_child.todo', self.highlighted_child.todo)
+        def check_inputs(inputs):
+            print('start TodoCheckList action_modify_description check_inputs')
+            print(inputs)
+            controller.modify_todo(
+                todo_id=self.highlighted_child.todo.id,
+                description=inputs['description']
+            )
+            self.rebuild_todos_list()
+            print('end TodoCheckList action_modify_description check_inputs ')
+
+        self.app.push_screen(
+            self.get_description_screen(
+                initial_description = self.highlighted_child.todo.description
+            ),
+            check_inputs
+        )
+        
+
+    def action_delete_todo(self):
+        print('in TodoCheckList action_delete_todo')
+        controller.delete_todo(self.highlighted_child.todo.id)
+        self.highlighted_child.remove()
+        if not self.children in [None, []]:
+            self.children[0].highlighted = True
+        self.app.notify(f'Todo #{self.highlighted_child.todo.id} has been deleted')
 
 

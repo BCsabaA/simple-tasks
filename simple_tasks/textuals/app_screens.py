@@ -3,7 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView
 from textual.widgets.option_list import Option
 
-from textuals.custom_tools import QuitScreen, FormScreen, QuestionScreen, InfoScreen
+from textuals.custom_tools import QuitScreen, FormScreen, QuestionScreen, InfoScreen, TodoCheckList
 from textuals.custom_tools import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList, CheckList
 from set_logger import set_logger
 import controller
@@ -13,7 +13,7 @@ import datetime
 
 logger = set_logger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
-
+    
 
 class MainScreen(Screen):
     BINDINGS = [
@@ -49,7 +49,6 @@ class MainScreen(Screen):
 
     def action_show_info(self):
         text = get_text_from_readme_md()
-
         self.app.push_screen(InfoScreen(text=text))
 
     def action_change_status(self):
@@ -93,14 +92,14 @@ class MainScreen(Screen):
         )
 
     async def action_modify_todos(self):
+        print('start MainScreen action_modify_todos')
         index = self.query_one(ObjectCardsGroup).index
         collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
-        def handle_quit() -> None:
-            #controller.update_task_todos_from_dict(task.id, inputs)
-            print('called back')
+        async def handle_quit() -> None:
+            print('start MainScreen action_modify_todos handle_quit')
             updated_task = controller.get_task_by_id(task.id)
             updated_todos = controller.get_task_todos(task.id)
             self.tasks = controller.get_tasks()
@@ -108,18 +107,11 @@ class MainScreen(Screen):
             self.query_one(ObjectCardsGroup).pop(index)
             self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
             self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
-            self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
+            await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
         self.app.push_screen(
             create_todos_screen(task=task, callback_on_quit=handle_quit)
         )
-        # updated_task = controller.get_task_by_id(task.id)
-        # self.tasks = controller.get_tasks()
-        # self.filter_tasks_list_by_status_id()
-        # self.query_one(ObjectCardsGroup).pop(index)
-        # self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
-        # self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
-        # self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
     def action_delete_task(self):
         index = self.query_one(ObjectCardsGroup).index
@@ -167,13 +159,12 @@ class MainScreen(Screen):
 
     async def action_filter_tasks(self):
         async def check_inputs(inputs: dict[str]) -> None:
-            print('in action_filter_tasks:')
             self.tasks = controller.get_tasks()
             self.status_options_list = controller.get_status_options_list(inputs['status-filter-list'])
             self.status_id_filter_list = inputs['status-filter-list']
             self.filter_tasks_list_by_status_id()
 
-            await self.fill_object_cards_group(self.filtered_tasks)
+            self.run_worker(self.fill_object_cards_group(self.filtered_tasks))
             await self.focus_and_select_listview(ObjectCardsGroup)
             await self.object_cards_group_refresh()
             
@@ -197,14 +188,11 @@ class MainScreen(Screen):
             focus_listview.index = select_index
 
     async def fill_object_cards_group(self, task_list: list[Task]):
-        print('fill_object_cards_group:')
-        print(task_list)
         object_cards_group = self.query_one(ObjectCardsGroup)
         object_cards_group.clear()
         if task_list == []:
             task_list = controller.get_active_tasks()
         for index, task in enumerate(task_list):
-            print(task)
             object_cards_group.append(ObjectCard(instance=task, index=index))
 
     def action_modify_task(self):
@@ -297,23 +285,15 @@ def create_add_comment_screen():
 
 def create_todos_screen(task: Task, callback_on_quit) -> FormScreen:
     todos = controller.get_task_todos(task.id)
-    return FormScreen([
-        InputWithBorder(
-            title=f'Todos for #{task.id} {task.name}',
-            widget=CheckList(
-                items=todos,
+    return FormScreen([TodoCheckList(
+                todos=todos,
                 classes='input-with-border-input',
-                task_id=task.id
-            ),
-        )],
+                task_id=task.id,
+                id='todo-check-list'
+            )],
         submit_button_display=False,
         callback_on_quit=callback_on_quit
     )
-    
-masks = {
-        #'date': '[2][0]99-B9-[0123]9',
-        'date': '9999-B9-99',
-    }
 
 def create_status_screen(task:Task):
     status_options_list = controller.get_status_options_list(task=task)
@@ -359,6 +339,11 @@ def create_option_list_object(status_options_list: list):
     return option_list_object
 
 def create_task_screen(task: Task=None):
+    masks = {
+        #'date': '[2][0]99-B9-[0123]9',
+        'date': '9999-B9-99',
+    }
+
     date_today = datetime.date.strftime(datetime.date.today(), DATE_FORMAT)
     status_options_list = controller.get_status_options_list(task=task)
     option_list_object = create_option_list_object(

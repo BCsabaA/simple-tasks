@@ -1,4 +1,4 @@
-
+$card-transparency: 20%;
 
 
 QuitScreen, FormScreen, QuestionScreen, InfoScreen {
@@ -64,8 +64,12 @@ FormScreen #description, FormScreen #comment {
     max-height: 5;
 }
 
+ListView > ListItem.-highlight {
+    background: white 20%;
+}
+
 ListItem {
-    padding-left: 1;
+    padding: 0 0 0 1;
 }
 
 Collapsible {
@@ -73,6 +77,8 @@ Collapsible {
 }
 
 CollapsibleTitle {
+    text-wrap: wrap;
+    width:100%;
 }
 
 .card-label {
@@ -81,35 +87,35 @@ CollapsibleTitle {
 }
 
 .card-not-started {
-    background: #e6b800
+    background: #e6b800 $card-transparency;
 }
 
 .card-not-started > * , .card-blocked > *{
-    color: black;
+    /*color: black;*/
 }
 
 .card-started {
-    background: #004d99;
+    background: #004d99 $card-transparency;
 }
 
 .card-delayed {
-    background: #b30000;
+    background: #b30000 $card-transparency;
 }
 
 .card-done {
-    background: #269900;
+    background: #269900 $card-transparency;
 }
 .card-blocked {
-    background: lightgray;
-    color: black;
+    background: lightgray $card-transparency;
+    /*color: black;*/
 }
 
 .card-skipped {
-    background: $surface;
+    background: $surface $card-transparency;
 }
 
 .card-deleted {
-    background: $surface;
+    background: $surface $card-transparency;
 }
 
 .card-comment{
@@ -165,11 +171,12 @@ MardownViewer>Grid {
     width: 100%;
 }
 
-CheckList {
+TodoCheckList, CheckList {
     height: auto;
     width: 100%;
     padding: 0;
     margin: 1 1;
+    
 }
 
 Checkbox {

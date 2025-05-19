@@ -91,3 +91,6 @@ class Todo(Table):
 
     def __str__(self):
         return f'Todo({self.id}, {self.task_id}, {self.description}, {self.done})'
+
+    def __repr__(self):
+        return f'Todo({self.id}, {self.task_id}, {self.description}, {self.done})'
