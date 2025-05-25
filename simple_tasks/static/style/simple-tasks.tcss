@@ -1,4 +1,4 @@
-$card-transparency: 20%;
+$card-transparency: 30%;
 
 
 QuitScreen, FormScreen, QuestionScreen, InfoScreen {
@@ -65,11 +65,11 @@ FormScreen #description, FormScreen #comment {
 }
 
 ListView > ListItem.-highlight {
-    background: white 20%;
+    background: white 10%;
 }
 
 ListItem {
-    padding: 0 0 0 1;
+    padding: 0 0 0 2;
 }
 
 Collapsible {

@@ -1,19 +1,27 @@
 import logging
+import os
+
+LOG_FILE = f'{os.getcwd()}/logs/app.log'
+
+# Delete old log file on each run
+if os.path.exists(LOG_FILE):
+    os.remove(LOG_FILE)
+
+from logger import AppLogger
+
+logger = AppLogger(__name__).get_logger()
 
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer
 
 from textuals.app_screens import MainScreen
-from textuals.custom_screens import QuitScreen
+from textuals.custom_tools import QuitScreen
 
-from set_logger import set_logger
-
-
-logger = set_logger(__name__)
 
 
 class SimpleTasks(App):
+
     
     CSS_PATH = "static/style/simple-tasks.tcss"
     SCREENS = {
@@ -24,7 +32,7 @@ class SimpleTasks(App):
     def on_mount(self):
         self.title = "Simple Tasks"
         self.push_screen('main')
-        logger.info('App mounted')
+        logger.info('App started')
         
 
 

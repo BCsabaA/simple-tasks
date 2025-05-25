@@ -1,17 +1,19 @@
 from textual.app import App, ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView
+from textual.widgets import Header, Footer, Input, MaskedInput, TextArea, Collapsible, SelectionList, OptionList, ListView, Label
 from textual.widgets.option_list import Option
 
 from textuals.custom_tools import QuitScreen, FormScreen, QuestionScreen, InfoScreen, TodoCheckList
-from textuals.custom_tools import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList, CheckList
-from set_logger import set_logger
+from textuals.custom_tools import InputWithBorder, ObjectCardsGroup, ObjectCard, CustomSelectionList
+from logger import AppLogger
 import controller
 from models import Task
 
 import datetime
 
-logger = set_logger(__name__)
+
+logger = AppLogger(__name__).get_logger()
+
 DATE_FORMAT = '%Y-%m-%d'
     
 
@@ -32,12 +34,15 @@ class MainScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
+        print('in app_screens MainScreen compose')
+        print(logger)
         self.tasks = controller.get_tasks()
         self.status_options_list = controller.get_status_options_list()
         self.status_id_filter_list = [option[1] for option in self.status_options_list if len(option)==3]
         self.filter_tasks_list_by_status_id()
         self.active_tasks = controller.get_active_tasks()
         yield Header()
+        yield Label('debug', id='debug')
         yield ObjectCardsGroup(self.active_tasks)
         yield Footer()
         self.AUTO_FOCUS = ObjectCardsGroup
@@ -61,8 +66,8 @@ class MainScreen(Screen):
             updated_task = controller.get_task_by_id(task.id)
             self.tasks = controller.get_tasks()
             self.filter_tasks_list_by_status_id()
-            self.query_one(ObjectCardsGroup).pop(index)
-            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, collapsed=collapsed_state)])
+            self.query_one(ObjectCardsGroup).children[index].remove()
+            self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, collapsed=collapsed_state, index=index)])
             self.notify(f'Status changed for task #{task.id} {task.name}', severity='information', timeout=5)
             self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
 
@@ -91,23 +96,31 @@ class MainScreen(Screen):
             check_inputs
         )
 
-    async def action_modify_todos(self):
+    def action_modify_todos(self):
         print('start MainScreen action_modify_todos')
-        index = self.query_one(ObjectCardsGroup).index
+        index = self.query_one(ObjectCardsGroup).highlighted_child.index
+        print(index)
         collapsed_state = self.query_one(ObjectCardsGroup).highlighted_child.children[0].collapsed
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
-        async def handle_quit() -> None:
-            print('start MainScreen action_modify_todos handle_quit')
+        def handle_quit() -> None:
+            object_cards_group = self.query_one(ObjectCardsGroup)
+            print(object_cards_group)
+            logger.info('MainScreen action_modify_todos handle_quit')
             updated_task = controller.get_task_by_id(task.id)
             updated_todos = controller.get_task_todos(task.id)
-            self.tasks = controller.get_tasks()
+            logger.info(f'index: {index}')
+            self.tasks.remove(task)
+            self.tasks.append(updated_task)
             self.filter_tasks_list_by_status_id()
-            self.query_one(ObjectCardsGroup).pop(index)
+            self.query_one(ObjectCardsGroup).children[index].remove()
             self.query_one(ObjectCardsGroup).insert(index, [ObjectCard(updated_task, index=index, collapsed=collapsed_state)])
+            
+            self.query_one(ObjectCardsGroup).watch_index(0, index)
             self.notify(f'Todos modified for task #{task.id} {task.name}', severity='information', timeout=5)
-            await self.focus_and_select_listview(ObjectCardsGroup, select_index = index)
+            print(object_cards_group)
+            #await self.focus_and_select_listview(ObjectCardsGroup, select_index=index)
 
         self.app.push_screen(
             create_todos_screen(task=task, callback_on_quit=handle_quit)
@@ -124,7 +137,7 @@ class MainScreen(Screen):
             controller.delete_task(task)
             self.tasks.remove(task)
             self.filter_tasks_list_by_status_id()
-            self.query_one(ObjectCardsGroup).pop(index)
+            self.query_one(ObjectCardsGroup).children[index].remove()
             self.notify(f'Task #{task.id} {task.name} deleted', severity='information', timeout=5)
             self.focus_and_select_listview(ObjectCardsGroup)
             
@@ -179,12 +192,12 @@ class MainScreen(Screen):
         object_cards_group = self.query_one(ObjectCardsGroup)
         object_cards_group.refresh()
 
-    async def focus_and_select_listview(self, listview: ListView, select_index: int=0, select_last: bool=False):
+    async def focus_and_select_listview(self, listview: ListView, select_index: int=None, select_last: bool=False):
         focus_listview = self.query_one(listview)
         focus_listview.focus()
         if select_last:
             focus_listview.index = len(listview.children) - 1
-        else:
+        elif select_index:
             focus_listview.index = select_index
 
     async def fill_object_cards_group(self, task_list: list[Task]):
@@ -196,11 +209,13 @@ class MainScreen(Screen):
             object_cards_group.append(ObjectCard(instance=task, index=index))
 
     def action_modify_task(self):
+        logger.info('MainScreen action_modify_task')
         index = self.query_one(ObjectCardsGroup).index
         selected_task = self.query_one(ObjectCardsGroup).highlighted_child
         task = controller.get_task_by_id(selected_task.task_id)
 
         def check_inputs(inputs: dict[str]) -> None:
+            logger.info('MainScreen action_modify_task check_inputs')
             task_id = self.query_one(ObjectCardsGroup).highlighted_child.task_id
             controller.update_task_from_dict(task_id, inputs)
             updated_task = controller.get_task_by_id(task_id)
@@ -208,14 +223,14 @@ class MainScreen(Screen):
             self.tasks.append(updated_task)
             self.filter_tasks_list_by_status_id()
             object_cards_group = self.query_one(ObjectCardsGroup)
-            object_cards_group.pop(index)
+            object_cards_group.children[index].remove()
             object_cards_group.insert(index, [ObjectCard(updated_task, index)])
             
             self.notify(f'Task #{updated_task.id} {updated_task.name} modified', severity='information', timeout=5)
                 
             object_cards_group.focus()
             if object_cards_group.children:
-                object_cards_group.index = 0
+                object_cards_group.index = index
 
         self.app.push_screen(
             create_task_screen(task),
@@ -232,8 +247,8 @@ class MainScreen(Screen):
             self.tasks = controller.get_tasks()
             task_list.append(
                 ObjectCard(
-                    new_task,
-                    task_list.children.count
+                    instance=new_task,
+                    index=len(task_list.children)
                 )
             )
 
@@ -291,7 +306,7 @@ def create_todos_screen(task: Task, callback_on_quit) -> FormScreen:
                 task_id=task.id,
                 id='todo-check-list'
             )],
-        submit_button_display=False,
+                      submit_button_display=False,
         callback_on_quit=callback_on_quit
     )
 

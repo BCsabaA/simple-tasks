@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label, Collapsible, Input, MaskedInput, TextArea, SelectionList, OptionList, MarkdownViewer, Footer, Header, ListView, ListItem, RadioSet, RadioButton, Checkbox
 from textual.containers import Vertical, Grid, Horizontal
-from textuals.custom_widgets import InputWithBorder, CustomSelectionList, CheckList
+# from textuals.custom_widgets import InputWithBorder, CustomSelectionList, CheckList
 
 from textual.events import Click
 from textual import on
@@ -13,9 +13,9 @@ from models import Todo
 
 import controller
 
-from set_logger import set_logger
+from logger import AppLogger
 
-logger = set_logger(__name__)
+logger = AppLogger(__name__).get_logger()
 
 
 class QuitScreen(ModalScreen):
@@ -141,12 +141,13 @@ class FormScreen(ModalScreen[dict]):
             id='form-screen')
         yield Footer()
 
-    async def action_close_screen(self):
-        print('start FormScreen action_close_screen')
+    def action_close_screen(self):
+        logger.info('FormScreen action_close_screen')
         self.app.pop_screen()
         if not self.callback_on_quit == None:
-            print('in if True')
-            await self.callback_on_quit()
+            logger.info('FormScreen call callback_on_quit')
+            logger.info(self.callback_on_quit)
+            self.callback_on_quit()
 
     def on_button_pressed(self, event: Button.Pressed):
         input_dict = {}
@@ -154,7 +155,7 @@ class FormScreen(ModalScreen[dict]):
         for i, widget in enumerate(widgets):
             if type(widget) == InputWithBorder:
                 input_field = widget.query_one('.input-with-border-input')
-                if type(input_field) == CheckList:
+                if type(input_field) == TodoCheckList:
                     for child in input_field.children:
                         input_dict.update(
                             {child.label: child.value}
@@ -234,6 +235,7 @@ class DoubleLabel(Horizontal):
 
 class ObjectCard(ListItem):
     def __init__(self, instance: object, index:int, collapsed: bool=True):
+        super().__init__()
         self.widgets = []
         self.collapsed = collapsed
         self.index = index
@@ -286,16 +288,21 @@ class ObjectCard(ListItem):
         self.todos = controller.get_task_todos(self.task_id)
         if self.todos not in [None, []]:
             self.widgets.append(Label('Todos:', classes='card-label'))
-            self.widgets.append(CheckList(
-                        items=self.todos,
-                        classes='input-with-border-checklist',
-                        disabled=True
-                    )
+            self.widgets.append(
+                TodoCheckList(
+                    todos=self.todos,
+                    task_id=self.task_id,
+                    classes='input-with-border-checklist',
+                    disabled=True
+                )
             )
             self.todo_count = len(self.todos)
             self.todo_done_count = Counter(todo.done for todo in self.todos)[True]
             print(self.todo_count, self.todo_done_count)
-        super().__init__()
+            print(self.parent)
+
+    def __str__(self):
+        return str(self.index)
 
     def compose(self) -> ComposeResult:
         statuses = controller.get_statuses_dict()
@@ -305,8 +312,8 @@ class ObjectCard(ListItem):
         else:
             title += ' no todos'
         object_card = CustomCollapsible(
-            self.widgets,
-            self.index,
+            widgets=self.widgets,
+            index=self.index,
             title = title,
             collapsed=self.collapsed
         )
@@ -341,8 +348,26 @@ class ObjectCardsGroup(ListView):
             yield widget
 
     def on_list_view_selected(self, item):
+        print(self)
+        print('ObjectCardsGroup on_list_view_selected')
+        print(item.item)
         item.item.query_one(Collapsible).collapsed = not item.item.query_one(Collapsible).collapsed
         item.item.highlighted = True
+        # self.index = self.highlighted_child.index
+        print(self.index)
+        print(self)
+
+    def watch_index(self, old, new):
+        debug_label = self.parent.query_one('#debug')
+        debug_label.update(f'index old: {old}, new:{new}')
+        super().watch_index(old, new)
+        print(self)
+
+    def __str__(self):
+        string = ''
+        for objectcard in self.children:
+            string += str(objectcard.index) + ' '
+        return string
 
 
 class ObjectRadioSet(RadioSet):
@@ -395,9 +420,25 @@ class CustomCollapsible(Collapsible):
         self.to_toggle = True
 
     @on(Collapsible.Toggled)
-    def print_toggled(self, item):
-        item.collapsible.parent.parent.index = self.index
+    def handle_toggled(self, item):
+    # def on_collapsible_title_toggle(self, event):
+        print('CustomCollapsible handle_toggled')
+        print(self)
+        print(self.index)
+        print(self.parent)
+        print(self.parent.index)
+        print(self.parent.parent)
+        old_index = self.parent.parent.index
+        new_index = self.parent.index
+        print(self.parent.parent)
+        self.parent.parent.index = self.parent.index
+        #self.parent.parent.watch_index(old_index, new_index)
+        print(self.parent.parent)
+        print(self.parent.parent.highlighted_child.index)
+        print(self.parent.parent)
+        #     item.collapsible.parent.parent.index = self.index
         self.parent.parent.focus()
+    print()
 
 
 class TodoCheckBox(Checkbox):
@@ -408,7 +449,7 @@ class TodoCheckBox(Checkbox):
         self.todo_id = todo_id
 
     @on(Checkbox.Changed)
-    def handle_changed(self, item):
+    def handle_changed(self, iteme):
         controller.modify_todo(self.todo_id, done=self.value)
 
 
@@ -426,12 +467,6 @@ class TodoListItem(ListItem):
             value=self.todo.done,
             todo_id=self.todo.id
         )
-
-    def on_mount(self):
-        print('in TodoListItem on_mount')
-    
-    def handle_todo_checklist_change(self, event):
-        print('in TodoCheckList handle_todo_checklist_change', event, event.item)
         
 
 class TodoCheckList(ListView):
@@ -445,28 +480,28 @@ class TodoCheckList(ListView):
     
     def __init__(
             self,
-            id: str,
             todos: list[Todo],
             task_id:int,
-            classes: str):
+            classes: str,
+            id: str=None,
+            disabled: bool=False,
+    ):
         super().__init__(id=id)
-        print('in TodoCheckList __init__', id, todos, task_id, classes)
+        logger.info('TodoCheckList __ínit__')
         self.todos = todos
         self.task_id = task_id
+        self.disabled=disabled
 
     def compose(self) -> ComposeResult:
-        print('in TodoCheckList compose')
+        logger.info('TodoCheckList compose')
         for index, todo in enumerate(self.todos):
             yield TodoListItem(
                 index=index,
                 todo=todo,
             )
-            
-    def on_mount(self):
-        print('in TodoCheckList on_mount')
-
+    
     def rebuild_todos_list(self):
-        print('in TodoCheckList rebuild_todos_list')
+        print('TodoCheckList rebuild_todos_list')
         for widget in self.children:
             widget.remove()
         self.todos = controller.get_task_todos(self.task_id)
@@ -478,9 +513,10 @@ class TodoCheckList(ListView):
                 )
             )
         self.children[0].highlighted = True
-        self.index = self.children[0].index
-        self.focus()
+        #self.watch_index(old_index=self.highlighted_child.index, new_index=0)
+        #self.focus()
         self.refresh()
+        print('self.highlighted_child', self.highlighted_child)
 
     def get_description_screen(
             self,
@@ -498,16 +534,14 @@ class TodoCheckList(ListView):
         ])
 
     def action_add_todo(self):
-        print('in TodoCheckList action_add_todo')
+        logger.info('TodoCheckList action_add_todo')
         def check_inputs(inputs):
-            print('start TodoCheckList check_inputs')
-            print(inputs)
+            logger.info('TodoCheckList check_inputs')
             controller.create_todo(
                 self.task_id,
                 inputs['description']
             )
             self.rebuild_todos_list()
-            print('end TodoCheckList check_inputs ')
 
         self.app.push_screen(
             self.get_description_screen(),
@@ -515,8 +549,7 @@ class TodoCheckList(ListView):
         )
 
     def action_modify_description(self):
-        print('in TodoCheckList action_modify_description')
-        print('self.highlighted_child.todo', self.highlighted_child.todo)
+        print('TodoCheckList action_modify_description')
         def check_inputs(inputs):
             print('start TodoCheckList action_modify_description check_inputs')
             print(inputs)
@@ -536,11 +569,13 @@ class TodoCheckList(ListView):
         
 
     def action_delete_todo(self):
-        print('in TodoCheckList action_delete_todo')
+        logger.info('TodoCheckList action_delete_todo')
         controller.delete_todo(self.highlighted_child.todo.id)
-        self.highlighted_child.remove()
-        if not self.children in [None, []]:
-            self.children[0].highlighted = True
+        #self.highlighted_child.remove()
+        self.pop(self.highlighted_child.index)
+        #self.rebuild_todos_list()
+        # if not self.children in [None, []]:
+        #     self.children[0].highlighted = True
         self.app.notify(f'Todo #{self.highlighted_child.todo.id} has been deleted')
 
 

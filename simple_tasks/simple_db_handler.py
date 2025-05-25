@@ -4,10 +4,9 @@
 import sqlite3
 import logging
 import os
-from set_logger import set_logger
+from logger import AppLogger
 
-
-LOGGER = set_logger(__name__)
+logger = AppLogger(__name__).get_logger()
 
 
 class Database():
@@ -16,7 +15,6 @@ class Database():
     TABLES = []
     def __init__(self, db_name):
         if Database.DATABASE:
-            LOGGER.info('class Database: __init__(): Database already exists')
             self.db_name = Database.DATABASE.db_name
             self.conn = Database.DATABASE.conn
             self.cursor = Database.DATABASE.cursor
@@ -28,42 +26,34 @@ class Database():
         # get table names from the database
         Database.TABLES = [self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table"').fetchall()[i][0] for i in range(len(self.cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table"').fetchall()))]
         self.close()
-        LOGGER.info('class Database: __init__(): Database created')
 
     def close(self):
         self.conn.close()
-        LOGGER.info('class Database: close(): Database closed')
 
     def commit(self):
         self.conn.commit()
-        LOGGER.info(f'class Database: commit(): Database committed')
 
     def open(self):
         self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
         self.cursor.execute('PRAGMA foreign_keys = ON;')
         self.conn.commit()
-        LOGGER.info(f'class Database: open(): Database opened')
 
     def rollback(self):
         self.conn.rollback()
-        LOGGER.info(f'class Database: rollback(): Database rolled back')
 
     def execute(self, query):
         if not Database.DATABASE:
-            LOGGER.info('class Database: execute(): No database, returning')
             return
         Database.DATABASE.open()
         data = Database.DATABASE.cursor.execute(query).fetchall()
         Database.DATABASE.commit()
         Database.DATABASE.close()
-        LOGGER.info(f'class Database: execute(): {query} executed')
         return data
 
     def read(self, obj_class, filters: dict=None, order_by: list=None):
         table = obj_class.TABLENAME
         if table not in Database.TABLES:
-            LOGGER.info(f'class Database: read_table(): {table} not in Database.TABLES')
             return []
         if filters is None:
             filters = {}
@@ -81,15 +71,12 @@ class Database():
             for key in order_by:
                 create_read_query += f'{key} ASC, '
             create_read_query = create_read_query[:-2]
-        LOGGER.info(f'class Database: read_table(): create_read_query: {create_read_query}')
         if not Database.DATABASE:
-            LOGGER.info('class Database: read_table(): No database, returning')
             return
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_read_query, tuple(filters.values()))
         rows = Database.DATABASE.cursor.fetchall()
         Database.DATABASE.close()
-        LOGGER.info(f'class Database: read_table(): {table} read')
         return [obj_class(*row) for row in rows]
 
     def insert(self,obj):
@@ -112,13 +99,11 @@ class Database():
     def update(self, obj_class, id, data: dict):
         create_update_query = f'UPDATE {obj_class.TABLENAME} SET {", ".join([f'{key}=?' for key in data.keys()])} WHERE id=?'
         if not Database.DATABASE:
-            LOGGER.info('class Database: update(): No database, returning')
             return
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_update_query, tuple(data.values()) + (id,))
         Database.DATABASE.commit()
         Database.DATABASE.close()
-        LOGGER.info(f'class Database: update(): {obj_class.TABLENAME} {id} updated')
 
     def delete(self, obj_class, id=None, filters: dict=None):
         if filters:
@@ -129,16 +114,13 @@ class Database():
         elif id:
             create_delete_query = f'DELETE FROM {obj_class.TABLENAME} WHERE id=?'
         else:
-            LOGGER.info('class Database: delete(): No id or filters provided')
             return
         if not Database.DATABASE:
-            LOGGER.info('class Database: delete(): No database, returning')
             return
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_delete_query, (id,))
         Database.DATABASE.commit()
         Database.DATABASE.close()
-        LOGGER.info(f'class Database: delete(): {obj_class.TABLENAME} {id} deleted')
 
     def __str__(self):
         return f'Database(name={self.db_name}, tables={self.TABLES} connection={self.conn}, cursor={self.cursor})'
@@ -155,7 +137,6 @@ class Table():
 
     def __init__(self):
         if not Database.DATABASE:
-            LOGGER.info('class Table: __init__(): No database, returning')
             return
         if self.__class__.TABLENAME not in Database.TABLES:
             self.parse_object_to_table()
@@ -170,19 +151,15 @@ class Table():
         columns = ', '.join(field for field in self.__dict__.keys() )
         values = tuple(self.__dict__.values())
         create_insert_query = f'INSERT INTO {self.__class__.TABLENAME}({columns}) VALUES({", ".join("?" for _ in values)})'
-        LOGGER.info(f'class Table: insert_instance_in_database(): create_insert_query: {create_insert_query}')
         if not Database.DATABASE:
-            LOGGER.info('class Table: insert_instance_in_database(): No database, returning')
             return
         Database.DATABASE.open()
         try:
             Database.DATABASE.cursor.execute(create_insert_query, values)
             Database.DATABASE.commit()
             self.id = Database.DATABASE.cursor.lastrowid
-            LOGGER.info(f'class Table: insert_instance_in_database(): {self.__class__.__name__}: {self} inserted')
         except sqlite3.IntegrityError:
             Database.DATABASE.rollback()
-            LOGGER.info(f'class Table: insert_instance_in_database(): {self.__class__.__name__}: {self} already exists (IntegrityError on some unique field), skipping')
         Database.DATABASE.close()
         return self.id
 
@@ -205,16 +182,13 @@ class Table():
                 create_table_query += f' REFERENCES {field.foreign_key_table}({field.foreign_key_column}) ON DELETE {field.on_delete} ON UPDATE {field.on_update}'
             create_table_query += ', '
         create_table_query = create_table_query[:-2] + ')'
-        LOGGER.info(f'class Table: parse_object_to_table(): create_table_query: {create_table_query}')
         if not Database.DATABASE:
-            LOGGER.info('class Table: parse_object_to_table(): No database, returning')
             return
         Database.DATABASE.open()
         Database.DATABASE.cursor.execute(create_table_query)
         Database.DATABASE.commit()
         Database.DATABASE.close()
         Database.TABLES.append(self.__class__.TABLENAME)
-        LOGGER.info(f'class Table: parse_object_to_table(): {self.__class__.__name__} table created')
 
 
 class Field():
@@ -230,10 +204,7 @@ class Field():
         self.foreign_key_column = foreign_key_column
         self.on_delete = on_delete
         self.on_update = on_update
-        
-        LOGGER.info(f'class Field: __init__(): Field {self.name} created: {self.__dict__}')
-
-
+    
 
 class Person(Table):
     TABLENAME = 'persons'
