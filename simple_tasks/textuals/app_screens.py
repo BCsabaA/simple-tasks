@@ -199,6 +199,10 @@ class MainScreen(Screen):
             focus_listview.index = len(listview.children) - 1
         elif select_index:
             focus_listview.index = select_index
+        else:
+            focus_listview.index = 0
+        focus_listview.action_select_cursor()
+        
 
     async def fill_object_cards_group(self, task_list: list[Task]):
         object_cards_group = self.query_one(ObjectCardsGroup)
